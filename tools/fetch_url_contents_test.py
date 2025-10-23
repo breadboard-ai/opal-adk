@@ -1,12 +1,12 @@
 """Unit tests for fetch_url_contents."""
 
+import unittest
 from unittest import mock
 from opal_adk.tools import fetch_url_contents
 import requests
-from google3.testing.pybase import googletest
 
 
-class FetchUrlContentsTest(googletest.TestCase):
+class FetchUrlContentsTest(unittest.TestCase):
 
   @mock.patch('requests.get')
   def test_fetch_url_success(self, mock_get):
@@ -63,4 +63,4 @@ class FetchUrlContentsTest(googletest.TestCase):
 
 
 if __name__ == '__main__':
-  googletest.main()
+  unittest.main()
