@@ -1,7 +1,7 @@
 """Agent for performing multi-step research using various tools."""
 
 from collections.abc import Callable, Sequence
-import logging
+import textwrap
 from typing import Any
 from google.adk.agents import llm_agent
 from google.adk.planners import built_in_planner
@@ -27,7 +27,7 @@ OUTPUT_KEY = 'opal_adk_research_agent_output'
 
 def research_system_instructions(is_first: bool) -> str:
   which = 'first' if is_first else 'next'
-  return f"""
+  return textwrap.dedent(f"""
     Your job is to use the provided query to produce raw research that will be later turned into a detailed research report.
     You are tasked with finding as much of relevant information as possible.
 
@@ -42,12 +42,21 @@ def research_system_instructions(is_first: bool) -> str:
     Now, provide a response. Your response must contain two parts:
     Thought: a brief plain text reasoning why this is the right {which} step and a description of what you will do in plain English.
     Action: invoking the tools are your disposal, more than one if necessary. If you're done, do not invoke any tools.
-    """
+    """)
+
+
+def previous_agent_output_instructions(output_key: str) -> str:
+  output_key = f'{output_key}'
+  return textwrap.dedent(f"""
+    You should make use of the additional information provided in the following:
+    
+    {output_key}
+  """)
 
 
 def deep_research_agent(
-    user_query: str,
     *,
+    parent_agent_output_key: str | None = None,
     model: models.Models = models.Models.GEMINI_2_5_FLASH,
     is_first_iteration: bool = True,
     additional_tools: Sequence[Callable[..., Any]] | None = None,
@@ -59,7 +68,8 @@ def deep_research_agent(
   user query.
 
   Args:
-    user_query: The initial query from the user to start the research.
+    parent_agent_output_key: The output key of the previous agent. This agent
+      has output to consider.
     model: The model to use with the agent. Defaults to Gemini 2.5 Flash.
     is_first_iteration: True if this is the first iteration of a multi-iteration
       agent run.
@@ -69,20 +79,17 @@ def deep_research_agent(
   Returns:
     An instance of base_agent.BaseAgent (specifically, an LlmAgent) configured
     for research.
-
-  Raises:
-    ValueError: If the user_query is empty or missing.
   """
   all_research_tools = list(_DEFAULT_RESEARCH_TOOLS)
-  if not user_query:
-    logging.error(
-        'research_agent: User query is missing or empty, received: %s',
-        user_query,
-    )
-    raise ValueError('research_agent: User query is missing or empty.')
-
   if additional_tools:
     all_research_tools.extend(additional_tools)
+
+  agent_instructions = research_system_instructions(is_first_iteration)
+  if parent_agent_output_key:
+    agent_instructions += previous_agent_output_instructions(
+        parent_agent_output_key
+    )
+
   thinking_config = types.ThinkingConfig(include_thoughts=True)
   return LlmAgent(
       name=AGENT_NAME,
@@ -92,7 +99,7 @@ def deep_research_agent(
           ' perform research given a user query.'
       ),
       tools=all_research_tools,
-      instruction=research_system_instructions(is_first_iteration),
+      instruction=agent_instructions,
       planner=built_in_planner.BuiltInPlanner(thinking_config=thinking_config),
       output_key=OUTPUT_KEY,
   )

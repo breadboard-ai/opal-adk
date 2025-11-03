@@ -16,34 +16,21 @@ class ResearchAgentTest(unittest.TestCase):
 
   def test_research_system_instructions_first_iteration(self):
     """Tests that research_system_instructions returns correct string for first iteration."""
-    agent = research_agent.deep_research_agent(
-        is_first_iteration=True, user_query='test query'
-    )
+    agent = research_agent.deep_research_agent(is_first_iteration=True)
     instructions = agent.instruction
     self.assertIn('the first step', instructions)
     self.assertNotIn('the next step', instructions)
 
   def test_research_system_instructions_next_iteration(self):
     """Tests that research_system_instructions returns correct string for next iteration."""
-    agent = research_agent.deep_research_agent(
-        is_first_iteration=False, user_query='test query'
-    )
+    agent = research_agent.deep_research_agent(is_first_iteration=False)
     instructions = agent.instruction
     self.assertIn('the next step', instructions)
     self.assertNotIn('the first step', instructions)
 
-  def test_deep_research_agent_no_query_raises_error(self):
-    """Tests that deep_research_agent raises ValueError if user_query is empty."""
-    with self.assertRaisesRegex(
-        ValueError, 'research_agent: User query is missing or empty'
-    ):
-      research_agent.deep_research_agent(is_first_iteration=True, user_query='')
-
   def test_deep_research_agent_creates_agent_with_defaults(self):
     """Tests that deep_research_agent creates an agent with default parameters."""
-    agent = research_agent.deep_research_agent(
-        is_first_iteration=True, user_query='test query'
-    )
+    agent = research_agent.deep_research_agent(is_first_iteration=True)
     self.assertEqual(agent.name, research_agent.AGENT_NAME)
     self.assertEqual(agent.output_key, research_agent.OUTPUT_KEY)
     self.assertCountEqual(
@@ -62,7 +49,6 @@ class ResearchAgentTest(unittest.TestCase):
     """Tests that deep_research_agent includes additional tools."""
     agent = research_agent.deep_research_agent(
         is_first_iteration=True,
-        user_query='test query',
         additional_tools=[dummy_tool],
     )
     self.assertCountEqual(
@@ -77,11 +63,24 @@ class ResearchAgentTest(unittest.TestCase):
 
   def test_deep_research_agent_next_iteration_instruction(self):
     """Tests that deep_research_agent sets correct instruction for next iteration."""
-    agent = research_agent.deep_research_agent(
-        is_first_iteration=False, user_query='test query'
-    )
+    agent = research_agent.deep_research_agent(is_first_iteration=False)
     self.assertEqual(
         agent.instruction, research_agent.research_system_instructions(False)
+    )
+
+  def test_deep_research_agent_with_parent_agent_output_key(self):
+    """Tests that deep_research_agent includes parent agent output instructions."""
+    agent = research_agent.deep_research_agent(
+        parent_agent_output_key='parent_key',
+        is_first_iteration=False,
+    )
+    self.assertIn(
+        research_agent.previous_agent_output_instructions('parent_key'),
+        agent.instruction,
+    )
+    self.assertIn(
+        research_agent.research_system_instructions(False),
+        agent.instruction,
     )
 
 
