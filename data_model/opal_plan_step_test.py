@@ -88,7 +88,7 @@ class OpalPlanStepTest(googletest.TestCase):
         output="output1",
         reasoning="reasoning1",
     )
-    expected = textwrap.dedent("""\
+    expected = textwrap.dedent("""
         <application_input>
         <field_name>step1</field_name>
         <field_type>image</field_type>
@@ -106,7 +106,7 @@ class OpalPlanStepTest(googletest.TestCase):
         output="output1",
         reasoning="reasoning1",
     )
-    expected = textwrap.dedent("""\
+    expected = textwrap.dedent("""
         <application_input>
         <field_name>step1</field_name>
         <field_type>image</field_type>
@@ -124,7 +124,7 @@ class OpalPlanStepTest(googletest.TestCase):
         output="output1",
         reasoning="reasoning1",
     )
-    expected = textwrap.dedent("""\
+    expected = textwrap.dedent("""
         <application_input>
         <field_name>step1</field_name>
         <field_type>audio</field_type>
@@ -142,7 +142,7 @@ class OpalPlanStepTest(googletest.TestCase):
         output="output1",
         reasoning="reasoning1",
     )
-    expected = textwrap.dedent("""\
+    expected = textwrap.dedent("""
         <application_input>
         <field_name>step1</field_name>
         <field_type>text</field_type>

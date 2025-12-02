@@ -51,7 +51,7 @@ class OpalPlanStep:
       output_type = 'audio'
     else:
       output_type = 'text'
-    return textwrap.dedent(f"""\
+    return textwrap.dedent(f"""
         <application_input>
         <field_name>{self.step_name}</field_name>
         <field_type>{output_type}</field_type>
