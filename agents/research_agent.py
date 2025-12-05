@@ -9,17 +9,9 @@ from google.genai import types
 from opal_adk import models
 from opal_adk.clients import vertex_ai_client
 from opal_adk.tools import fetch_url_contents
-from opal_adk.tools import map_search
+from opal_adk.tools import map_search_tool
 from opal_adk.tools import vertex_search_tool
 
-
-LlmAgent = llm_agent.LlmAgent
-
-
-_DEFAULT_RESEARCH_TOOLS: Sequence[Callable[..., Any]] = (
-    map_search.search_google_maps_places,
-    fetch_url_contents.fetch_url,
-)
 
 AGENT_NAME = 'opal_adk_research_agent'
 OUTPUT_KEY = 'opal_adk_research_agent_output'
@@ -60,7 +52,7 @@ def deep_research_agent(
     model: models.Models = models.Models.GEMINI_2_5_FLASH,
     is_first_iteration: bool = True,
     additional_tools: Sequence[Callable[..., Any]] | None = None,
-) -> LlmAgent:
+) -> llm_agent.LlmAgent:
   """Creates an LlmAgent configured for research.
 
   This agent uses a set of default research tools and can be extended with
@@ -80,12 +72,13 @@ def deep_research_agent(
     An instance of base_agent.BaseAgent (specifically, an LlmAgent) configured
     for research.
   """
-  all_research_tools = list(_DEFAULT_RESEARCH_TOOLS)
-  all_research_tools.append(
+  all_research_tools = [
+      map_search_tool.MapSearchTool(),
       vertex_search_tool.VertexSearchTool(
           genai_client=vertex_ai_client.create_vertex_ai_client()
-      )
-  )
+      ),
+      fetch_url_contents.fetch_url,
+  ]
   if additional_tools:
     all_research_tools.extend(additional_tools)
 
@@ -96,7 +89,7 @@ def deep_research_agent(
     )
 
   thinking_config = types.ThinkingConfig(include_thoughts=True)
-  return LlmAgent(
+  return llm_agent.LlmAgent(
       name=AGENT_NAME,
       model=model.value,
       description=(
