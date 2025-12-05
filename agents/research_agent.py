@@ -7,9 +7,10 @@ from google.adk.agents import llm_agent
 from google.adk.planners import built_in_planner
 from google.genai import types
 from opal_adk import models
+from opal_adk.clients import vertex_ai_client
 from opal_adk.tools import fetch_url_contents
 from opal_adk.tools import map_search
-from opal_adk.tools import vertex_search
+from opal_adk.tools import vertex_search_tool
 
 
 LlmAgent = llm_agent.LlmAgent
@@ -18,7 +19,6 @@ LlmAgent = llm_agent.LlmAgent
 _DEFAULT_RESEARCH_TOOLS: Sequence[Callable[..., Any]] = (
     map_search.search_google_maps_places,
     fetch_url_contents.fetch_url,
-    vertex_search.search_via_vertex_ai,
 )
 
 AGENT_NAME = 'opal_adk_research_agent'
@@ -81,6 +81,11 @@ def deep_research_agent(
     for research.
   """
   all_research_tools = list(_DEFAULT_RESEARCH_TOOLS)
+  all_research_tools.append(
+      vertex_search_tool.VertexSearchTool(
+          genai_client=vertex_ai_client.create_vertex_ai_client()
+      )
+  )
   if additional_tools:
     all_research_tools.extend(additional_tools)
 
