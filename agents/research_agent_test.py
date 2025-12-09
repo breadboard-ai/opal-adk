@@ -5,7 +5,7 @@ from unittest import mock
 
 from absl.testing import parameterized
 from opal_adk.agents import research_agent
-from opal_adk.tools import fetch_url_contents
+from opal_adk.tools import fetch_url_contents_tool
 from opal_adk.tools import map_search_tool
 from opal_adk.tools import vertex_search_tool
 
@@ -53,7 +53,13 @@ class ResearchAgentTest(parameterized.TestCase):
     self.assertEqual(agent.output_key, research_agent.OUTPUT_KEY)
 
     self.assertEqual(len(agent.tools), 3)
-    self.assertIn(fetch_url_contents.fetch_url, agent.tools)
+
+    fetch_tools = [
+        t
+        for t in agent.tools
+        if isinstance(t, fetch_url_contents_tool.FetchUrlContentsTool)
+    ]
+    self.assertEqual(len(fetch_tools), 1)
 
     map_tools = [
         t for t in agent.tools if isinstance(t, map_search_tool.MapSearchTool)
@@ -78,8 +84,14 @@ class ResearchAgentTest(parameterized.TestCase):
         additional_tools=[dummy_tool],
     )
     self.assertEqual(len(agent.tools), 4)
-    self.assertIn(fetch_url_contents.fetch_url, agent.tools)
     self.assertIn(dummy_tool, agent.tools)
+
+    fetch_tools = [
+        t
+        for t in agent.tools
+        if isinstance(t, fetch_url_contents_tool.FetchUrlContentsTool)
+    ]
+    self.assertEqual(len(fetch_tools), 1)
 
     map_tools = [
         t for t in agent.tools if isinstance(t, map_search_tool.MapSearchTool)

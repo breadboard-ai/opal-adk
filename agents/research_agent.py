@@ -8,7 +8,7 @@ from google.adk.planners import built_in_planner
 from google.genai import types
 from opal_adk import models
 from opal_adk.clients import vertex_ai_client
-from opal_adk.tools import fetch_url_contents
+from opal_adk.tools import fetch_url_contents_tool
 from opal_adk.tools import map_search_tool
 from opal_adk.tools import vertex_search_tool
 
@@ -77,8 +77,9 @@ def deep_research_agent(
       vertex_search_tool.VertexSearchTool(
           genai_client=vertex_ai_client.create_vertex_ai_client()
       ),
-      fetch_url_contents.fetch_url,
+      fetch_url_contents_tool.FetchUrlContentsTool(),
   ]
+
   if additional_tools:
     all_research_tools.extend(additional_tools)
 

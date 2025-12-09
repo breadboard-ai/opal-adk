@@ -2,7 +2,7 @@
 
 import unittest
 from unittest import mock
-from opal_adk.tools import fetch_url_contents
+from opal_adk.tools import fetch_url_contents_tool
 import requests
 
 
@@ -21,7 +21,7 @@ class FetchUrlContentsTest(unittest.TestCase):
     mock_get.return_value = mock_response
 
     url = 'http://example.com'
-    result = fetch_url_contents.fetch_url(url)
+    result = fetch_url_contents_tool.fetch_url(url)
 
     mock_get.assert_called_once_with(url)
     mock_response.raise_for_status.assert_called_once()
@@ -39,13 +39,13 @@ class FetchUrlContentsTest(unittest.TestCase):
 
     url = 'http://example.com'
     with self.assertRaises(requests.exceptions.RequestException):
-      fetch_url_contents.fetch_url(url)
+      fetch_url_contents_tool.fetch_url(url)
 
   def test_convert_to_markdown(self):
     """Tests that convert_to_markdown converts HTML to markdown."""
     html_content = '<html><body><h1>Title</h1><p>Hello world!</p></body></html>'
     expected_markdown = '# Title\n\nHello world!\n\n'
-    result = fetch_url_contents.convert_to_markdown(html_content)
+    result = fetch_url_contents_tool._convert_to_markdown(html_content)
     self.assertEqual(expected_markdown.strip(), result.strip())
 
   @mock.patch('requests.get')
@@ -59,7 +59,7 @@ class FetchUrlContentsTest(unittest.TestCase):
 
     url = 'http://example.com/404'
     with self.assertRaises(requests.exceptions.HTTPError):
-      fetch_url_contents.fetch_url(url)
+      fetch_url_contents_tool.fetch_url(url)
 
 
 if __name__ == '__main__':
