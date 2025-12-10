@@ -30,7 +30,7 @@ _OPAL_ADK_GCP_PROJECT_ID = flags.DEFINE_string(
 
 _OPAL_ADK_MAPS_API_KEY = flags.DEFINE_string(
     "opal_adk_maps_api_key",
-    required=True,
+    required=False,
     default=None,
     help="API key for using the Google Maps API.",
 )

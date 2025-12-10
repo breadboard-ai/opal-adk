@@ -42,39 +42,44 @@ class ResearchAgentTest(parameterized.TestCase):
     agent = research_agent.deep_research_agent(
         is_first_iteration=is_first_iteration
     )
-    instructions = agent.instruction
+    instructions = agent.sub_agents[0].instruction
     self.assertIn(expected_in, instructions)
     self.assertNotIn(expected_not_in, instructions)
 
   def test_deep_research_agent_creates_agent_with_defaults(self):
     """Tests that deep_research_agent creates an agent with default parameters."""
     agent = research_agent.deep_research_agent(is_first_iteration=True)
-    self.assertEqual(agent.name, research_agent.AGENT_NAME)
-    self.assertEqual(agent.output_key, research_agent.OUTPUT_KEY)
-
-    self.assertEqual(len(agent.tools), 3)
+    self.assertEqual(agent.name, 'research_agent_orchestrator')
+    self.assertLen(agent.sub_agents, 1)
+    sub_agent = agent.sub_agents[0]
+    self.assertEqual(sub_agent.name, research_agent.AGENT_NAME)
+    self.assertEqual(sub_agent.output_key, research_agent.OUTPUT_KEY)
 
     fetch_tools = [
         t
-        for t in agent.tools
+        for t in sub_agent.tools
         if isinstance(t, fetch_url_contents_tool.FetchUrlContentsTool)
     ]
-    self.assertEqual(len(fetch_tools), 1)
+    self.assertLen(fetch_tools, 1)
+    self.assertLen(sub_agent.tools, 3)
 
     map_tools = [
-        t for t in agent.tools if isinstance(t, map_search_tool.MapSearchTool)
+        t
+        for t in sub_agent.tools
+        if isinstance(t, map_search_tool.MapSearchTool)
     ]
-    self.assertEqual(len(map_tools), 1)
+    self.assertLen(map_tools, 1)
 
     vertex_tools = [
         t
-        for t in agent.tools
+        for t in sub_agent.tools
         if isinstance(t, vertex_search_tool.VertexSearchTool)
     ]
-    self.assertEqual(len(vertex_tools), 1)
+    self.assertLen(vertex_tools, 1)
 
     self.assertEqual(
-        agent.instruction, research_agent.research_system_instructions(True)
+        sub_agent.instruction,
+        research_agent.research_system_instructions(True),
     )
 
   def test_deep_research_agent_with_additional_tools(self):
@@ -83,33 +88,37 @@ class ResearchAgentTest(parameterized.TestCase):
         is_first_iteration=True,
         additional_tools=[dummy_tool],
     )
-    self.assertEqual(len(agent.tools), 4)
-    self.assertIn(dummy_tool, agent.tools)
+    sub_agent = agent.sub_agents[0]
+    self.assertLen(sub_agent.tools, 4)
+    self.assertIn(dummy_tool, sub_agent.tools)
 
     fetch_tools = [
         t
-        for t in agent.tools
+        for t in sub_agent.tools
         if isinstance(t, fetch_url_contents_tool.FetchUrlContentsTool)
     ]
-    self.assertEqual(len(fetch_tools), 1)
+    self.assertLen(fetch_tools, 1)
 
     map_tools = [
-        t for t in agent.tools if isinstance(t, map_search_tool.MapSearchTool)
+        t
+        for t in sub_agent.tools
+        if isinstance(t, map_search_tool.MapSearchTool)
     ]
-    self.assertEqual(len(map_tools), 1)
+    self.assertLen(map_tools, 1)
 
     vertex_tools = [
         t
-        for t in agent.tools
+        for t in sub_agent.tools
         if isinstance(t, vertex_search_tool.VertexSearchTool)
     ]
-    self.assertEqual(len(vertex_tools), 1)
+    self.assertLen(vertex_tools, 1)
 
   def test_deep_research_agent_next_iteration_instruction(self):
     """Tests that deep_research_agent sets correct instruction for next iteration."""
     agent = research_agent.deep_research_agent(is_first_iteration=False)
     self.assertEqual(
-        agent.instruction, research_agent.research_system_instructions(False)
+        agent.sub_agents[0].instruction,
+        research_agent.research_system_instructions(False),
     )
 
   def test_deep_research_agent_with_parent_agent_output_key(self):
@@ -120,11 +129,11 @@ class ResearchAgentTest(parameterized.TestCase):
     )
     self.assertIn(
         research_agent.previous_agent_output_instructions('parent_key'),
-        agent.instruction,
+        agent.sub_agents[0].instruction,
     )
     self.assertIn(
         research_agent.research_system_instructions(False),
-        agent.instruction,
+        agent.sub_agents[0].instruction,
     )
 
 

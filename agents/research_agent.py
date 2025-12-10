@@ -3,7 +3,7 @@
 from collections.abc import Callable, Sequence
 import textwrap
 from typing import Any
-from google.adk.agents import llm_agent
+from google.adk.agents import llm_agent, loop_agent
 from google.adk.planners import built_in_planner
 from google.genai import types
 from opal_adk import models
@@ -52,7 +52,8 @@ def deep_research_agent(
     model: models.Models = models.Models.GEMINI_2_5_FLASH,
     is_first_iteration: bool = True,
     additional_tools: Sequence[Callable[..., Any]] | None = None,
-) -> llm_agent.LlmAgent:
+    iterations: int = 1,
+) -> loop_agent.LoopAgent:
   """Creates an LlmAgent configured for research.
 
   This agent uses a set of default research tools and can be extended with
@@ -67,9 +68,11 @@ def deep_research_agent(
       agent run.
     additional_tools: An optional sequence of additional callable tools to
       include in the agent's tool set.
+    iterations: The number of times to run the research agent before returning
+      results.
 
   Returns:
-    An instance of base_agent.BaseAgent (specifically, an LlmAgent) configured
+    An instance of base_agent.BaseAgent (specifically, a LoopAgent) configured
     for research.
   """
   all_research_tools = [
@@ -90,15 +93,26 @@ def deep_research_agent(
     )
 
   thinking_config = types.ThinkingConfig(include_thoughts=True)
-  return llm_agent.LlmAgent(
-      name=AGENT_NAME,
-      model=model.value,
+  return loop_agent.LoopAgent(
+      name='research_agent_orchestrator',
       description=(
-          'Makes use of research tools, such as web search and url fetching to'
-          ' perform research given a user query.'
+          'Loop agent that orchestrates the running of a research llm agent.'
       ),
-      tools=all_research_tools,
-      instruction=agent_instructions,
-      planner=built_in_planner.BuiltInPlanner(thinking_config=thinking_config),
-      output_key=OUTPUT_KEY,
+      max_iterations=iterations,
+      sub_agents=[
+          llm_agent.LlmAgent(
+              name=AGENT_NAME,
+              model=model.value,
+              description=(
+                  'Makes use of research tools, such as web search and url'
+                  ' fetching to perform research given a user query.'
+              ),
+              tools=all_research_tools,
+              instruction=agent_instructions,
+              planner=built_in_planner.BuiltInPlanner(
+                  thinking_config=thinking_config
+              ),
+              output_key=OUTPUT_KEY,
+          )
+      ],
   )
