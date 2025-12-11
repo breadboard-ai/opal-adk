@@ -3,7 +3,8 @@
 from collections.abc import Callable, Sequence
 import textwrap
 from typing import Any
-from google.adk.agents import llm_agent, loop_agent
+from google.adk.agents import llm_agent
+from google.adk.agents import loop_agent
 from google.adk.planners import built_in_planner
 from google.genai import types
 from opal_adk import models
