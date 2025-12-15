@@ -4,6 +4,7 @@ from collections.abc import AsyncGenerator
 import logging
 from google.adk import runners
 from google.adk.agents import sequential_agent
+from google.adk.events import event
 from google.adk.memory import in_memory_memory_service
 from google.adk.sessions import in_memory_session_service
 from google.genai import types
@@ -36,7 +37,7 @@ class AgentExecutor:
 
   async def execute_deep_research_agent(
       self, user_id: str, opal_step: opal_plan_step.OpalPlanStep
-  ) -> AsyncGenerator[str, None] | None:
+  ) -> AsyncGenerator[event.Event, None] | None:
     """Executes an agent workflow for in-depth research and report generation.
 
     This method orchestrates a `SequentialAgent` composed of a `research_agent`

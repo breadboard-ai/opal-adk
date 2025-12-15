@@ -37,16 +37,28 @@ _OPAL_ADK_MAPS_API_KEY = flags.DEFINE_string(
 
 
 def get_service_account() -> ServiceAccount:
-  return ServiceAccount(_OPAL_ADK_GCP_SERVICE_ACCOUNT.value)
+  try:
+    return ServiceAccount(_OPAL_ADK_GCP_SERVICE_ACCOUNT.value)
+  except flags.UnparsedFlagAccessError:
+    return ServiceAccount(_OPAL_ADK_GCP_SERVICE_ACCOUNT.default)
 
 
 def get_location() -> Location:
-  return Location(_OPAL_ADK_GCP_LOCATION.value)
+  try:
+    return Location(_OPAL_ADK_GCP_LOCATION.value)
+  except flags.UnparsedFlagAccessError:
+    return Location(_OPAL_ADK_GCP_LOCATION.default)
 
 
 def get_project_id() -> ProjectId:
-  return ProjectId(_OPAL_ADK_GCP_PROJECT_ID.value)
+  try:
+    return ProjectId(_OPAL_ADK_GCP_PROJECT_ID.value)
+  except flags.UnparsedFlagAccessError:
+    return ProjectId(_OPAL_ADK_GCP_PROJECT_ID.default)
 
 
 def get_maps_api_key() -> MapsAPIKey:
-  return MapsAPIKey(_OPAL_ADK_MAPS_API_KEY.value)
+  try:
+    return MapsAPIKey(_OPAL_ADK_MAPS_API_KEY.value)
+  except flags.UnparsedFlagAccessError:
+    return MapsAPIKey(_OPAL_ADK_MAPS_API_KEY.default)
