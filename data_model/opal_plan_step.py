@@ -14,9 +14,10 @@ class OpalPlanStep:
   step_name: str
   step_intent: str
   model_api: str
-  input_parameters: list[str]
-  output: str
-  reasoning: str
+  input_parameters: list[str] = dataclasses.field(default_factory=list)
+  output: str = ''
+  reasoning: str = ''
+  iterations: int = 1
   is_list_output: bool = False
   options: _StepExecutionOptions = dataclasses.field(
       default_factory=_StepExecutionOptions
@@ -39,6 +40,7 @@ class OpalPlanStep:
       <input_parameters>{self.input_parameters}</input_parameters>
       <output>{self.output}</output>
       <reasoning>{self.reasoning}</reasoning>
+      <iterations>{self.iterations}</iterations>
       <is_list_output>{self.is_list_output}</is_list_output>
       </plan_step>
       """)

@@ -5,7 +5,6 @@ to be performed.
 """
 
 import dataclasses
-import textwrap
 from opal_adk.data_model import opal_plan_step
 
 
@@ -22,8 +21,8 @@ class OpalPlan:
   """
 
   plan_name: str
-  plan_steps: list[
-      opal_plan_step.OpalPlanStep | list[opal_plan_step.OpalPlanStep]
+  plan_steps: dict[
+      opal_plan_step.OpalPlanStep, list[opal_plan_step.OpalPlanStep]
   ]
 
   @property

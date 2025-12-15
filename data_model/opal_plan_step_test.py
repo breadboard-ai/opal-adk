@@ -26,6 +26,7 @@ class OpalPlanStepTest(googletest.TestCase):
       <input_parameters>['param1']</input_parameters>
       <output>output1</output>
       <reasoning>reasoning1</reasoning>
+      <iterations>1</iterations>
       <is_list_output>False</is_list_output>
       </plan_step>
       """)
@@ -50,6 +51,7 @@ class OpalPlanStepTest(googletest.TestCase):
       <input_parameters>['param1']</input_parameters>
       <output>output1</output>
       <reasoning>reasoning1</reasoning>
+      <iterations>1</iterations>
       <is_list_output>False</is_list_output>
       </plan_step>
       """)
@@ -74,6 +76,7 @@ class OpalPlanStepTest(googletest.TestCase):
       <input_parameters>['param1']</input_parameters>
       <output>output1</output>
       <reasoning>reasoning1</reasoning>
+      <iterations>1</iterations>
       <is_list_output>False</is_list_output>
       </plan_step>
       """)
