@@ -11,19 +11,19 @@ MapsAPIKey = NewType("MapsAPIKey", str)
 
 _OPAL_ADK_GCP_SERVICE_ACCOUNT = flags.DEFINE_string(
     "opal_adk_gcp_service_account",
-    required=True,
+    required=False,
     default=None,
     help="GCP service account to use for Opal ADK.",
 )
 _OPAL_ADK_GCP_LOCATION = flags.DEFINE_string(
     "opal_adk_gcp_location",
-    required=True,
+    required=False,
     default=None,
     help="GCP location for Opal ADK resources.",
 )
 _OPAL_ADK_GCP_PROJECT_ID = flags.DEFINE_string(
     "opal_adk_gcp_project_id",
-    required=True,
+    required=False,
     default=None,
     help="GCP project ID for Opal ADK.",
 )

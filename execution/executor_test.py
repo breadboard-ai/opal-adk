@@ -1,5 +1,6 @@
 """Tests for executor."""
 
+import os
 import unittest
 from unittest import mock
 
@@ -54,11 +55,54 @@ class ExecutorTest(unittest.IsolatedAsyncioTestCase):
         self.mock_report_writing_agent_patcher.start()
     )
     self.addCleanup(self.mock_report_writing_agent_patcher.stop)
+    self.env_patcher = mock.patch.dict(
+        os.environ,
+        {
+            'GOOGLE_CLOUD_PROJECT': 'test_project',
+            'GOOGLE_CLOUD_LOCATION': 'test_location',
+            'GOOGLE_GENAI_USE_VERTEXAI': 'true',
+        },
+    )
+    self.env_patcher.start()
+    self.addCleanup(self.env_patcher.stop)
 
     self.executor = executor.AgentExecutor()
 
+  def test_init_raises_error_with_missing_project_id(self):
+    with self.assertRaisesRegex(
+        ValueError,
+        'Both project_id and location must be provided, but got'
+        " project_id=None and location='us-central1'",
+    ):
+      executor.AgentExecutor(location='us-central1')
+
+  def test_init_raises_error_with_missing_location(self):
+    with self.assertRaisesRegex(
+        ValueError,
+        'Both project_id and location must be provided, but got'
+        " project_id='my-project' and location=None",
+    ):
+      executor.AgentExecutor(project_id='my-project')
+
+  def test_init_sets_env_vars(self):
+    with mock.patch.dict(os.environ, clear=True):
+      executor.AgentExecutor(project_id='p', location='l')
+      self.assertEqual(os.environ['GOOGLE_CLOUD_PROJECT'], 'p')
+      self.assertEqual(os.environ['GOOGLE_CLOUD_LOCATION'], 'l')
+      self.assertEqual(os.environ['GOOGLE_GENAI_USE_VERTEXAI'], 'true')
+
+  def test_init_raises_error_with_missing_env_vars(self):
+    with mock.patch.dict(os.environ, clear=True):
+      with self.assertRaisesRegex(
+          ValueError,
+          'When project_id and location are not provided, the following'
+          ' environment variables must be set: GOOGLE_CLOUD_PROJECT,'
+          ' GOOGLE_CLOUD_LOCATION, GOOGLE_GENAI_USE_VERTEXAI',
+      ):
+        executor.AgentExecutor()
+
   def test_create_content_from_string(self):
-    content = self.executor._create_content_from_string('hello')
+    content = executor._create_content_from_string('hello')
     expected_content = types.Content(
         role='user', parts=[types.Part(text='hello')]
     )

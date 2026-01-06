@@ -2,6 +2,7 @@
 
 from collections.abc import AsyncGenerator
 import logging
+import os
 from google.adk import runners
 from google.adk.agents import sequential_agent
 from google.adk.events import event
@@ -13,6 +14,10 @@ from opal_adk.agents import research_agent
 from opal_adk.data_model import opal_plan_step
 
 
+def _create_content_from_string(content: str) -> types.Content:
+  return types.Content(role="user", parts=[types.Part(text=content)])
+
+
 class AgentExecutor:
   """Executes various agent workflows using in-memory session and memory services.
 
@@ -21,7 +26,56 @@ class AgentExecutor:
   their execution context.
   """
 
-  def __init__(self):
+  def __init__(
+      self, *, project_id: str | None = None, location: str | None = None
+  ):
+    """Initializes the AgentExecutor with optional project and location configurations.
+
+    The AgentExecutor can be initialized with optional project and location
+    configurations. If both are provided then they will be used to configure
+    the environment variables GOOGLE_CLOUD_PROJECT and GOOGLE_CLOUD_LOCATION.
+    If neither are provided then the environment variables GOOGLE_CLOUD_PROJECT,
+    GOOGLE_CLOUD_LOCATION, and GOOGLE_GENAI_USE_VERTEXAI must be set. If only
+    one is provided then an exception will be raised.
+
+    Args:
+      project_id: The Google Cloud project ID to use for Vertex AI. If provided,
+        `location` must also be provided. If not provided then there must be an
+        existing environment variable set for GOOGLE_CLOUD_PROJECT.
+      location: The Google Cloud location (e.g., "us-central1") to use for
+        Vertex AI. If provided, `project_id` must also be provided. If not
+        provided then there must be an existing environment variable set for
+        GOOGLE_CLOUD_LOCATION.
+
+    Raises:
+      ValueError: If only one of `project_id` or `location` is provided.
+    """
+
+    if bool(project_id) != bool(location):
+      raise ValueError(
+          "Both project_id and location must be provided, but got"
+          f" project_id={project_id!r} and location={location!r}"
+      )
+
+    if project_id and location:
+      os.environ["GOOGLE_CLOUD_PROJECT"] = project_id
+      os.environ["GOOGLE_CLOUD_LOCATION"] = location
+      os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "true"
+    else:
+      # Neither project_id nor location were provided,
+      # so check for required env vars.
+      required_env_vars = [
+          "GOOGLE_CLOUD_PROJECT",
+          "GOOGLE_CLOUD_LOCATION",
+          "GOOGLE_GENAI_USE_VERTEXAI",
+      ]
+      missing_vars = [var for var in required_env_vars if var not in os.environ]
+      if missing_vars:
+        raise ValueError(
+            "When project_id and location are not provided, the following "
+            f"environment variables must be set: {', '.join(missing_vars)}"
+        )
+
     self.session_service = in_memory_session_service.InMemorySessionService()
     self.memory_service = in_memory_memory_service.InMemoryMemoryService()
     logging.info("AgentExecutor: %r created.", self)
@@ -31,9 +85,6 @@ class AgentExecutor:
         f"{self.__class__.__name__}(session_service={self.session_service!r}, "
         f"memory_service={self.memory_service!r})"
     )
-
-  def _create_content_from_string(self, content: str) -> types.Content:
-    return types.Content(role="user", parts=[types.Part(text=content)])
 
   async def execute_deep_research_agent(
       self, user_id: str, opal_step: opal_plan_step.OpalPlanStep
@@ -51,7 +102,7 @@ class AgentExecutor:
       opal_step: The opal plan step configuration, containing agent parameters
         such as iterations.
 
-    Yields:
+    Returns:
       Chunks of the agent's output as the execution progresses, typically
       including research findings and report sections.
     """
@@ -81,5 +132,5 @@ class AgentExecutor:
     return runner.run_async(
         user_id=user_id,
         session_id=session.id,
-        new_message=self._create_content_from_string(opal_step.step_intent),
+        new_message=_create_content_from_string(opal_step.step_intent),
     )
