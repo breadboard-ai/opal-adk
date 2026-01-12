@@ -1,6 +1,6 @@
 """Sets up the agent execution environment and manages the agent sessions."""
 
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Mapping
 import logging
 import os
 from google.adk import runners
@@ -14,8 +14,32 @@ from opal_adk.agents import research_agent
 from opal_adk.data_model import opal_plan_step
 
 
+_PARAMETER_KEY = "query"
+
+
 def _create_content_from_string(content: str) -> types.Content:
   return types.Content(role="user", parts=[types.Part(text=content)])
+
+
+def _extract_input_parameter(plan_step: opal_plan_step.OpalPlanStep) -> str:
+  """Extracts a single input parameter key from an OpalPlanStep.
+
+  Args:
+    plan_step: The OpalPlanStep containing the input parameters.
+
+  Returns:
+    The extracted input parameter key.
+
+  Raises:
+    ValueError: If there isn't exactly one input parameter.
+  """
+  input_params = plan_step.input_parameters
+  if len(input_params) != 1:
+    raise ValueError(
+        "Executor.py: When parameter_name is not provided, expected exactly "
+        f"one input parameter, but got {len(input_params)}: {input_params}"
+    )
+  return input_params[0]
 
 
 class AgentExecutor:
@@ -87,7 +111,11 @@ class AgentExecutor:
     )
 
   async def execute_deep_research_agent(
-      self, user_id: str, opal_step: opal_plan_step.OpalPlanStep
+      self,
+      user_id: str,
+      opal_step: opal_plan_step.OpalPlanStep,
+      *,
+      execution_inputs: Mapping[str, types.Content],
   ) -> AsyncGenerator[event.Event, None] | None:
     """Executes an agent workflow for in-depth research and report generation.
 
@@ -101,6 +129,8 @@ class AgentExecutor:
       user_id: The ID of the user initiating the research.
       opal_step: The opal plan step configuration, containing agent parameters
         such as iterations.
+      execution_inputs: The inputs provided for the agent execution. This will
+        include inputs such as the research topic.
 
     Returns:
       Chunks of the agent's output as the execution progresses, typically
@@ -129,8 +159,16 @@ class AgentExecutor:
         memory_service=self.memory_service,
     )
 
+    input_param = _extract_input_parameter(opal_step)
+    if input_param not in execution_inputs:
+      raise ValueError(
+          f"Executor.py: Input parameter '{input_param}' not found in execution"
+          f" inputs. Available inputs: {list(execution_inputs.keys())}"
+      )
+
+    research_query = execution_inputs[input_param]
     return runner.run_async(
         user_id=user_id,
         session_id=session.id,
-        new_message=_create_content_from_string(opal_step.step_intent),
+        new_message=research_query,
     )

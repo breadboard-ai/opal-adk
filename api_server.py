@@ -2,10 +2,10 @@
 
 from collections.abc import AsyncGenerator, Mapping, Sequence
 import logging
+from typing import NewType
 
 from absl import app
 from absl import flags
-from typing import NewType
 import fastapi
 from fastapi import responses
 from opal_adk import flags as opal_flags
@@ -70,7 +70,9 @@ class OpalAdkApi:
         iterations=request.iterations,
     )
     agent_generator = await self.executor.execute_deep_research_agent(
-        user_id=request.user_id, opal_step=opal_step
+        user_id=request.user_id,
+        opal_step=opal_step,
+        execution_inputs={"query": request.query},
     )
     if agent_generator is not None:
       async for event in agent_generator:

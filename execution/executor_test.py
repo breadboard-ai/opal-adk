@@ -115,6 +115,7 @@ class ExecutorTest(unittest.IsolatedAsyncioTestCase):
         step_intent='do research',
         model_api='gemini',
         iterations=3,
+        input_parameters=['test_input'],
     )
 
     # Assuming 'Session' is the class returned by create_session.
@@ -130,7 +131,12 @@ class ExecutorTest(unittest.IsolatedAsyncioTestCase):
         return_value='async_generator_result'
     )
 
-    result = await self.executor.execute_deep_research_agent(user_id, step)
+    input_content = types.Content(
+        role='user', parts=[types.Part(text='do research')]
+    )
+    result = await self.executor.execute_deep_research_agent(
+        user_id, step, execution_inputs={'test_input': input_content}
+    )
 
     self.mock_research_agent_mod.deep_research_agent.assert_called_once_with(
         iterations=3
