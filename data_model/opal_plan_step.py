@@ -12,8 +12,8 @@ class OpalPlanStep:
   """Represents a single step in an e2e Opal plan."""
 
   step_name: str
-  step_intent: str
-  model_api: str
+  step_intent: str = ''
+  model_api: str = ''
   input_parameters: list[str] = dataclasses.field(default_factory=list)
   output: str = ''
   reasoning: str = ''
