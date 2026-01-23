@@ -110,6 +110,33 @@ class AgentExecutor:
         f"memory_service={self.memory_service!r})"
     )
 
+  async def execute_agent_node(
+      self,
+      user_id: str,
+      opal_step: opal_plan_step.OpalPlanStep,
+      *,
+      execution_inputs: Mapping[str, types.Content],
+  ) -> AsyncGenerator[event.Event, None] | None:
+    """Executes a Breadboard node in agent mode.
+
+    This execution method will create and execute an agent representing a single
+    node in a Breadboard graph that has "agent" mode enabled. These nodes 
+    are similar to non-agent modes but instructions and context are provided
+    by the front end and they have access to more tools making them more 
+    flexible but less deterministic.
+
+    Args:
+      user_id: The ID of the user.
+      opal_step: The opal plan step configuration. The `step_name` is used
+        for the agent's name.
+      execution_inputs: The inputs provided for the agent execution. This
+        should contain the query for the LLM.
+
+    Returns:
+      Chunks of the agent's output as the execution progresses.
+    """
+    raise NotImplementedError("execute_agent_node is not yet implemented.")
+
   async def execute_deep_research_agent(
       self,
       user_id: str,
