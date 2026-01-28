@@ -3,7 +3,7 @@
 from google.adk.agents import llm_agent
 from google.adk.planners import built_in_planner
 from google.genai import types
-from opal_adk import models
+from opal_adk.types import models
 
 REPORT_WRITING_SYSTEM_INSTRUCTIONS = """
   You are a research report writer.

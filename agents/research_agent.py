@@ -7,11 +7,11 @@ from google.adk.agents import llm_agent
 from google.adk.agents import loop_agent
 from google.adk.planners import built_in_planner
 from google.genai import types
-from opal_adk import models
 from opal_adk.clients import vertex_ai_client
 from opal_adk.tools import fetch_url_contents_tool
 from opal_adk.tools import map_search_tool
 from opal_adk.tools import vertex_search_tool
+from opal_adk.types import models
 
 
 AGENT_NAME = 'opal_adk_research_agent'

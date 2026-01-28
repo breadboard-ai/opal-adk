@@ -4,9 +4,9 @@ import unittest
 from unittest import mock
 
 from google.adk.agents import sequential_agent
-from opal_adk import models
 from opal_adk.agents import report_writing_agent
 from opal_adk.agents import research_agent
+from opal_adk.types import models
 from opal_adk.workflows import deep_research_agent_workflow
 
 

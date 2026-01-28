@@ -6,9 +6,9 @@ cited report using a `report_writing_agent`.
 """
 
 from google.adk.agents import sequential_agent
-from opal_adk import models
 from opal_adk.agents import report_writing_agent
 from opal_adk.agents import research_agent
+from opal_adk.types import models
 
 _RESEARCH_AGENT_MODEL = models.Models.GEMINI_2_5_FLASH
 _REPORT_WRITING_AGENT_MODEL = models.Models.GEMINI_2_5_FLASH

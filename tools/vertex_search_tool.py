@@ -7,19 +7,62 @@ AI `generate_content` API, specifically using the `google_search` tool.
 from typing import Any, Sequence
 
 from google import genai
+from google.adk.agents import llm_agent
+from google.adk.tools import agent_tool
 from google.adk.tools import base_tool
 from google.adk.tools import tool_context
 from google.genai import types
-from opal_adk.constants import models
+from opal_adk.clients import vertex_ai_client
+from opal_adk.types import models
 from opal_adk.util import gemini_utils
 
 
 _MAX_OUTPUT_TOKENS = 20000
-_TEMPERATURE = 0.0
+_TEMPERATURE = 1.0
 _THINKING_BUDGET = 0
-
+_SEARCH_AGENT_TOOL_INSTRUCTIONS = (
+    "You are a specialist in using Vertex AI search given a topic to search. "
+    " You MUST use the VertexSearchTool provided to perform you search query."
+)
 
 Models = models.Models
+
+
+def search_agent_tool(
+    model: models.Models = models.Models.FLASH_MODEL_NAME,
+) -> agent_tool.AgentTool:
+  """Creates an AgentTool instance for performing Vertex AI searches.
+
+  This agent tool wraps the `VertexSearchTool` to allow agents to utilize
+  Google Search via Vertex AI's `generate_content` API, specifically
+  addressing limitations where agents might not directly call other tools when
+  Vertex or Google Search is involved.
+
+  Args:
+    model: The Vertex AI model to use for the search agent. Defaults to
+      `models.Models.FLASH_MODEL_NAME`, which is a fast, light-weight model.
+
+  Returns:
+    An `agent_tool.AgentTool` configured to use `VertexSearchTool`.
+  """
+  return agent_tool.AgentTool(
+      llm_agent.LlmAgent(
+          model=model.value,
+          name="opal_adk_vertex_search_agent_tool",
+          description=(
+              "Vertex search wrapped as an agent tool. This is to overcome the"
+              " limitation that an agent cannot call any other tool if vertex"
+              " or google search is used."
+          ),
+          instruction=_SEARCH_AGENT_TOOL_INSTRUCTIONS,
+          tools=[
+              VertexSearchTool(
+                  model=model,
+                  genai_client=vertex_ai_client.create_vertex_ai_client(),
+              )
+          ],
+      )
+  )
 
 
 class VertexSearchTool(base_tool.BaseTool):
@@ -35,7 +78,7 @@ class VertexSearchTool(base_tool.BaseTool):
       *,
       genai_client: genai.Client,
       text_safety_settings: Sequence[types.SafetySetting] | None = None,
-      model: str = Models.MODEL_GEMINI_2_5_FLASH.value,
+      model: models.Models = models.Models.FLASH_MODEL_NAME,
   ):
     super().__init__(
         name="OpalAdkVertexSearchTool",
@@ -43,7 +86,7 @@ class VertexSearchTool(base_tool.BaseTool):
     )
     self.genai_client = genai_client
     self.text_safety_settings = text_safety_settings
-    self.model = model
+    self.model = model.value
 
   def __call__(
       self, query: str, context: tool_context.ToolContext

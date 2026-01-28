@@ -3,7 +3,7 @@
 import dataclasses
 from typing import Literal
 from opal_adk.data_model import safety_settings
-from opal_adk import models
+from opal_adk.types import models
 
 _SafetySettings = safety_settings.SafetySettings
 

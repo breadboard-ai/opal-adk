@@ -6,8 +6,8 @@ from unittest import mock
 from google import genai
 from google.adk.tools import tool_context
 from google.genai import types
-from opal_adk.constants import models
 from opal_adk.tools import vertex_search_tool
+from opal_adk.types import models
 
 
 class VertexSearchToolTest(unittest.TestCase):
@@ -25,7 +25,7 @@ class VertexSearchToolTest(unittest.TestCase):
         self.tool.description, "Performs a web search using Vertex AI."
     )
     self.assertEqual(
-        self.tool.model, models.Models.MODEL_GEMINI_2_5_FLASH.value
+        self.tool.model, models.Models.FLASH_MODEL_NAME.value
     )
     self.assertIsNone(self.tool.text_safety_settings)
 
@@ -39,9 +39,9 @@ class VertexSearchToolTest(unittest.TestCase):
     tool = vertex_search_tool.VertexSearchTool(
         genai_client=self.mock_genai_client,
         text_safety_settings=safety_settings,
-        model="custom-model",
+        model=models.Models.LITE_MODEL_NAME,
     )
-    self.assertEqual(tool.model, "custom-model")
+    self.assertEqual(tool.model, models.Models.LITE_MODEL_NAME.value)
     self.assertEqual(tool.text_safety_settings, safety_settings)
 
   @mock.patch("opal_adk.util.gemini_utils.extract_grounding_metadata")
@@ -70,7 +70,7 @@ class VertexSearchToolTest(unittest.TestCase):
     self.mock_genai_client.models.generate_content.assert_called_once()
     _, kwargs = self.mock_genai_client.models.generate_content.call_args
     self.assertEqual(
-        kwargs["model"], models.Models.MODEL_GEMINI_2_5_FLASH.value
+        kwargs["model"], models.Models.GEMINI_2_5_FLASH.value
     )
     self.assertEqual(kwargs["contents"], query)
     config = kwargs["config"]
@@ -83,9 +83,7 @@ class VertexSearchToolTest(unittest.TestCase):
     mock_context = mock.MagicMock(spec=tool_context.ToolContext)
 
     mock_response = mock.MagicMock(spec=types.GenerateContentResponse)
-    mock_response.text = (
-        "Test search result"
-    )
+    mock_response.text = "Test search result"
     mock_response.candidates = []
     self.mock_genai_client.models.generate_content.return_value = mock_response
 
@@ -96,6 +94,7 @@ class VertexSearchToolTest(unittest.TestCase):
 
       self.assertEqual(result, {"result": []})
       mock_extract_metadata.assert_not_called()
+
 
 if __name__ == "__main__":
   unittest.main()
