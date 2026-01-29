@@ -4,11 +4,13 @@ from collections.abc import AsyncGenerator, Mapping
 import logging
 import os
 from google.adk import runners
+from google.adk.agents import loop_agent
 from google.adk.agents import sequential_agent
 from google.adk.events import event
 from google.adk.memory import in_memory_memory_service
 from google.adk.sessions import in_memory_session_service
 from google.genai import types
+from opal_adk.agents import node_agent
 from opal_adk.agents import report_writing_agent
 from opal_adk.agents import research_agent
 from opal_adk.data_model import agent_step
@@ -16,6 +18,7 @@ from opal_adk.data_model import opal_plan_step
 
 
 _PARAMETER_KEY = "query"
+_MAX_ITERATIONS = 10
 
 
 def _create_content_from_string(content: str) -> types.Content:
@@ -143,7 +146,34 @@ class AgentExecutor:
         "AgentExecutor: Node agent execution called with execution_inputs: %s",
         execution_inputs,
     )
-    pass
+    logging.info("executor: model_constraint: %s", step.model_constraint)
+    agent = node_agent.node_agent(step.model_constraint)
+    orchestrator_agent = loop_agent.LoopAgent(
+        name="opal_adk_node_agent_orchestrator",
+        description=(
+            "Loop agent that executes the node agent until the objective is"
+            " completed or the agent cannot continue and fails."
+        ),
+        sub_agents=[agent],
+        max_iterations=_MAX_ITERATIONS,
+    )
+
+    session = await self.session_service.create_session(
+        app_name=step.step_name, user_id=user_id
+    )
+    runner = runners.Runner(
+        app_name=step.step_name,
+        agent=orchestrator_agent,
+        session_service=self.session_service,
+        memory_service=self.memory_service,
+    )
+
+    return runner.run_async(
+        user_id=user_id,
+        session_id=session.id,
+        new_message=step.objective,
+        invocation_id=step.invocation_id,
+    )
 
   async def execute_deep_research_agent(
       self,
