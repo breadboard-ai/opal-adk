@@ -1,8 +1,8 @@
 """Sets up the agent execution environment and manages the agent sessions."""
 
 from collections.abc import AsyncGenerator, Mapping
-import logging
 import os
+from absl import logging
 from google.adk import runners
 from google.adk.agents import loop_agent
 from google.adk.agents import sequential_agent
@@ -10,12 +10,12 @@ from google.adk.events import event
 from google.adk.memory import in_memory_memory_service
 from google.adk.sessions import in_memory_session_service
 from google.genai import types
+from opal_adk import flags
 from opal_adk.agents import node_agent
 from opal_adk.agents import report_writing_agent
 from opal_adk.agents import research_agent
 from opal_adk.data_model import agent_step
 from opal_adk.data_model import opal_plan_step
-
 
 _PARAMETER_KEY = "query"
 _MAX_ITERATIONS = 10
@@ -103,6 +103,8 @@ class AgentExecutor:
             "When project_id and location are not provided, the following "
             f"environment variables must be set: {', '.join(missing_vars)}"
         )
+    if flags.get_debug_logging():
+      logging.set_verbosity(logging.DEBUG)
 
     self.session_service = in_memory_session_service.InMemorySessionService()
     self.memory_service = in_memory_memory_service.InMemoryMemoryService()

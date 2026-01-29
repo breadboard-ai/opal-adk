@@ -35,6 +35,16 @@ _OPAL_ADK_MAPS_API_KEY = flags.DEFINE_string(
     help="API key for using the Google Maps API.",
 )
 
+_OPAL_ADK_DEBUG_LOGGING = flags.DEFINE_bool(
+    "opal_adk_debug_logging",
+    required=False,
+    default=False,
+    help=(
+        "True if debug logging should be enabled, this will print out fine"
+        " grained ADK logs."
+    ),
+)
+
 
 def get_service_account() -> ServiceAccount:
   try:
@@ -62,3 +72,11 @@ def get_maps_api_key() -> MapsAPIKey:
     return MapsAPIKey(_OPAL_ADK_MAPS_API_KEY.value)
   except flags.UnparsedFlagAccessError:
     return MapsAPIKey(_OPAL_ADK_MAPS_API_KEY.default)
+
+
+def get_debug_logging() -> bool:
+  try:
+    return _OPAL_ADK_DEBUG_LOGGING.value
+  except flags.UnparsedFlagAccessError:
+    return _OPAL_ADK_DEBUG_LOGGING.default
+
