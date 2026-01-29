@@ -4,7 +4,7 @@ import logging
 from google.adk.tools import tool_context as tc
 
 
-def objective_fullfilled(
+def objective_fulfilled(
     tool_context: tc.ToolContext,
 ) -> dict[str, str]:
   """Indicates completion of the overall objective.

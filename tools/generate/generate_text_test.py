@@ -64,12 +64,12 @@ class GenerateTextTest(parameterized.TestCase):
     super().tearDown()
 
   def test_generate_text_default_args(self):
-    tool = generate_text.generate_text()
+    tool = generate_text.create_generate_text_agent()
 
     self.mock_model_converter.assert_called_once_with(models.SimpleModel.FLASH)
     self.mock_llm_agent_cls.assert_called_once()
     _, kwargs = self.mock_llm_agent_cls.call_args
-    self.assertEqual(kwargs['name'], 'generate_text agent as a tool')
+    self.assertEqual(kwargs['name'], 'generate_text')
     self.assertEqual(kwargs['model'], self.mock_model_converter.return_value)
     self.assertEqual(kwargs['tools'], [])
     self.mock_agent_tool_cls.assert_called_once_with(
@@ -100,7 +100,7 @@ class GenerateTextTest(parameterized.TestCase):
   def test_generate_text_with_grounding(
       self, kwargs, tool_attr_name, check_return_value
   ):
-    generate_text.generate_text(**kwargs)
+    generate_text.create_generate_text_agent(**kwargs)
 
     mock_tool = getattr(self, tool_attr_name)
     if check_return_value:
@@ -113,10 +113,9 @@ class GenerateTextTest(parameterized.TestCase):
     self.assertIn(expected_tool, call_kwargs['tools'])
 
   def test_generate_text_all_options(self):
-    generate_text.generate_text(
+    generate_text.create_generate_text_agent(
         model=models.SimpleModel.PRO,
         output_format=output_type.OutputType.FILE,
-        file_name='test_file',
         search_grounding=True,
         maps_grounding=True,
         url_context=True,

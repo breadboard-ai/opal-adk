@@ -2,6 +2,8 @@
 
 from absl.testing import absltest
 from opal_adk.data_model import agent_step
+from opal_adk.types import model_constraint as mc
+from opal_adk.types import ui_type as ut
 
 
 class AgentStepTest(absltest.TestCase):
@@ -10,12 +12,12 @@ class AgentStepTest(absltest.TestCase):
     step = agent_step.AgentStep(
         step_name='step1',
         objective='objective1',
-        model_constraint='constraint1',
+        model_constraint=mc.ModelConstraint.TEXT_FLASH,
         invocation_id='inv1',
         input_parameters=['param1'],
         output='output1',
         reasoning='reasoning1',
-        ui_type='ui_type1',
+        ui_type=ut.UIType.CHAT,
         ui_prompt='ui_prompt1',
         is_list_output=True,
         system_prompt='sys_prompt1',
@@ -24,12 +26,12 @@ class AgentStepTest(absltest.TestCase):
       <step_name>step1</step_name>
       <objective>objective1</objective>
       <system_prompt>sys_prompt1</system_prompt>
-      <model_constraint>constraint1</model_constraint>
+      <model_constraint>text_flash</model_constraint>
       <invocation_id>inv1</invocation_id>
       <input_parameters>['param1']</input_parameters>
       <output>output1</output>
       <reasoning>reasoning1</reasoning>
-      <ui_type>ui_type1</ui_type>
+      <ui_type>chat</ui_type>
       <ui_prompt>ui_prompt1</ui_prompt>
       <is_list_output>True</is_list_output>
       </plan_step>"""
@@ -42,7 +44,7 @@ class AgentStepTest(absltest.TestCase):
     step = agent_step.AgentStep(
         step_name='step1',
         objective='objective1',
-        model_constraint='constraint1',
+        model_constraint=mc.ModelConstraint.TEXT_FLASH,
         ui_prompt='prompt',
     )
     # Check that system prompt is empty tag by default
@@ -52,12 +54,12 @@ class AgentStepTest(absltest.TestCase):
     step = agent_step.AgentStep(
         step_name='step1',
         objective='objective1',
-        ui_type='ui_type1',
+        ui_type=ut.UIType.CHAT,
         ui_prompt='prompt',
     )
     expected_output = """<application_input>
       <field_name>step1</field_name>
-      <field_type>ui_type1</field_type>
+      <field_type>UIType.CHAT</field_type>
       <field_blurb>objective1</field_blurb>
       </application_input>"""
     self.assertEqual(

@@ -2,6 +2,7 @@
 
 import enum
 
+
 class UIType(enum.Enum):
   """The UI type of the agent mode node."""
   UNSPECIFIED = "unspecified"

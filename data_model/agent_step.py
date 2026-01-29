@@ -5,9 +5,10 @@ to be performed.
 """
 
 import dataclasses
-import textwrap
 
 from google.genai import types
+from opal_adk.types import model_constraint as mc
+from opal_adk.types import ui_type as ut
 
 
 @dataclasses.dataclass(frozen=True)
@@ -17,12 +18,14 @@ class AgentStep:
   step_name: str
   objective: types.Content
   ui_prompt: types.Content
-  model_constraint: str = ''
-  invocation_id: str = ''
+  model_constraint: mc.ModelConstraint = (
+      mc.ModelConstraint.UNSPECIFIED
+  )
+  invocation_id: str | None = None
   input_parameters: list[str] = dataclasses.field(default_factory=list)
   output: str = ''
   reasoning: str = ''
-  ui_type: str = ''
+  ui_type: ut.UIType = ut.UIType.UNSPECIFIED
   is_list_output: bool = False
   system_prompt: str = ''
 
@@ -37,12 +40,12 @@ class AgentStep:
       <step_name>{self.step_name}</step_name>
       <objective>{self.objective}</objective>
       {system_prompt_step}
-      <model_constraint>{self.model_constraint}</model_constraint>
+      <model_constraint>{self.model_constraint.value}</model_constraint>
       <invocation_id>{self.invocation_id}</invocation_id>
       <input_parameters>{self.input_parameters}</input_parameters>
       <output>{self.output}</output>
       <reasoning>{self.reasoning}</reasoning>
-      <ui_type>{self.ui_type}</ui_type>
+      <ui_type>{self.ui_type.value}</ui_type>
       <ui_prompt>{self.ui_prompt}</ui_prompt>
       <is_list_output>{self.is_list_output}</is_list_output>
       </plan_step>"""

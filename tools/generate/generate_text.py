@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 from google.adk.agents import llm_agent
 from google.adk.tools import agent_tool
 from opal_adk.tools import fetch_url_contents_tool
@@ -12,14 +13,13 @@ no chit-chat and no explaining what you're doing and why. DO NOT start with
 "Okay", or "Alright" or any preambles. Just the output, please."""
 
 
-def generate_text(
+def create_generate_text_agent(
     model: models.SimpleModel = models.SimpleModel.FLASH,
     output_format: output_type.OutputType = output_type.OutputType.TEXT,
-    file_name: str | None = None,
     search_grounding: bool = False,
     maps_grounding: bool = False,
     url_context: bool = False,
-) -> agent_tool.AgentTool:
+) -> Any:
   """An extremely versatile text generator, powered by Gemini.
 
   Use it for any tasks that involve generation of text. Supports multimodal
@@ -43,9 +43,6 @@ def generate_text(
       "text" output format might be a better choice. When "text" is specified,
       the output will be returned as text directlty, and the "text" response
       parameter will be provided.`
-    file_name: The name of the file to save the output to. This is the name that
-      will come after "/vfs/" prefix in the file path. Use snake_case for
-      naming. Only use when the "output_format" is set to "file".`
     search_grounding: Whether or not to use Google Search grounding. Grounding
       with Google Search connects the Gemini model to real-time web content and
       works with all available  languages. This allows Gemini to provide more
@@ -62,12 +59,12 @@ def generate_text(
       summaries, blog posts, or reports. - Analyze Code & Docs: Point to a
       GitHub repository or technical documentation URL to explain code, generate
       setup instructions, or answer questions. Specify URLs in the prompt.
+
   Returns:
     An `AgentTool` instance configured for text generation with the specified
     grounding and context options.
   """
   logging.info("generate_text: output_format: %s", output_format)
-  logging.info("generate_text: file_name: %s", file_name)
   filtered_tools = []
   if search_grounding:
     filtered_tools.append(vertex_search_tool.search_agent_tool())
@@ -76,8 +73,8 @@ def generate_text(
   if url_context:
     filtered_tools.append(fetch_url_contents_tool.FetchUrlContentsTool)
   return agent_tool.AgentTool(
-      llm_agent.LlmAgent(
-          name="generate_text agent as a tool",
+      agent=llm_agent.LlmAgent(
+          name="generate_text",
           description=(
               "An llm agent with specific instructions and tools for generating"
               " a plan to create text. This agent is used as a tool by other"

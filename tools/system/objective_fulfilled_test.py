@@ -10,7 +10,7 @@ class ObjectiveFulfilledTest(unittest.TestCase):
   def test_objective_fulfilled(self):
     mock_tool_context = mock.Mock()
 
-    result = objective_fulfilled.objective_fullfilled(mock_tool_context)
+    result = objective_fulfilled.objective_fulfilled(mock_tool_context)
 
     self.assertEqual(result, {"status": "success"})
     self.assertTrue(mock_tool_context.actions.escalate)
