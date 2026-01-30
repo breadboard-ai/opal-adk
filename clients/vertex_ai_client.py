@@ -5,7 +5,7 @@ from google import genai
 from opal_adk import flags
 
 
-def create_vertex_ai_client():
+def create_vertex_ai_client() -> genai.Client:
   """Creates a Vertex AI client using the genai library.
 
   The client is initialized with project and location from opal_adk flags.

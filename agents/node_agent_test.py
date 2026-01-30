@@ -43,7 +43,7 @@ class NodeAgentTest(parameterized.TestCase):
 
     self.mock_llm_agent_cls.assert_called_once()
     _, kwargs = self.mock_llm_agent_cls.call_args
-    self.assertEqual(kwargs["model"], models.Models.GEMINI_2_5_FLASH.value)
+    self.assertEqual(kwargs["model"], models.Models.GEMINI_3_FLASH.value)
 
   def test_node_agent_initialization_custom_model(self):
     self.mock_get_tools.return_value = []
@@ -68,11 +68,13 @@ class NodeAgentTest(parameterized.TestCase):
     self.mock_llm_agent_cls.assert_called_once()
     _, kwargs = self.mock_llm_agent_cls.call_args
 
-    self.assertEqual(kwargs["instruction"], "instruction1\ninstruction2")
+    self.assertEqual(kwargs["static_instruction"], "instruction1\ninstruction2")
     self.assertEqual(kwargs["tools"], ["tool1", "tool2", "tool3"])
     self.assertEqual(kwargs["name"], "opal_adk_node_agent")
     self.assertEqual(kwargs["output_key"], "opal_adk_node_agent_output")
     self.assertIn("Iteratively works", kwargs["description"])
+    self.assertEqual(kwargs["generate_content_config"].temperature, 1.0)
+    self.assertEqual(kwargs["generate_content_config"].top_p, 1)
 
     # Verify planner configuration
     self.mock_planner_cls.assert_called_once()

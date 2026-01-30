@@ -10,11 +10,13 @@ from opal_adk.util import tool_utils
 
 AGENT_NAME = "opal_adk_node_agent"
 OUTPUT_KEY = "opal_adk_node_agent_output"
+_TEMPERATURE = 1.0
+_TOP_P = 1
 
 
 def node_agent(
     constraint: model_constraint.ModelConstraint,
-    agent_model: models.Models = models.Models.GEMINI_2_5_FLASH,
+    agent_model: models.Models = models.Models.GEMINI_3_FLASH,
 ) -> llm_agent.LlmAgent:
   """Creates an LlmAgent configured for writing research reports.
 
@@ -41,12 +43,22 @@ def node_agent(
     agent_instructions.append(agent_instruction)
     tools = tools + tool_list
   instructions = "\n".join(agent_instructions)
+  config = types.GenerateContentConfig(
+      temperature=1.0,
+      top_p=1,
+      tool_config={
+          "function_calling_config": {
+              "mode": "ANY"
+          }
+      },
+  )
   return llm_agent.LlmAgent(
       name=AGENT_NAME,
       description="Iteratively works to solve the stated objective",
       model=agent_model.value,
-      instruction=instructions,
+      static_instruction=instructions,
       output_key=OUTPUT_KEY,
+      generate_content_config=config,
       planner=built_in_planner.BuiltInPlanner(thinking_config=thinking_config),
       tools=tools,
   )
