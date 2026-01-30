@@ -33,6 +33,6 @@ def get_tools_with_model_constraints(
           ),
           (
               generate_instructions.GENERATE_INSTRUCTIONS,
-              [generate_text.create_generate_text_agent()],
+              [generate_text.generate_text],
           ),
       ]

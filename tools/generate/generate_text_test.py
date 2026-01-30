@@ -1,11 +1,11 @@
 """Tests for generate_text."""
 
+import unittest
 from unittest import mock
 
 from absl.testing import absltest
 from absl.testing import parameterized
-from google.adk.agents import llm_agent
-from google.adk.tools import agent_tool
+from opal_adk.clients import vertex_ai_client
 from opal_adk.tools import fetch_url_contents_tool
 from opal_adk.tools import map_search_tool
 from opal_adk.tools import vertex_search_tool
@@ -14,13 +14,15 @@ from opal_adk.types import models
 from opal_adk.types import output_type
 
 
-class GenerateTextTest(parameterized.TestCase):
+class GenerateTextTest(
+    parameterized.TestCase, unittest.IsolatedAsyncioTestCase
+):
 
   def setUp(self):
     super().setUp()
     # Patcher for vertex_search_tool.search_agent_tool
     self.search_tool_patcher = mock.patch.object(
-        vertex_search_tool, 'search_agent_tool' 
+        vertex_search_tool, 'search_agent_tool'
     )
     self.mock_search_tool = self.search_tool_patcher.start()
 
@@ -36,46 +38,61 @@ class GenerateTextTest(parameterized.TestCase):
     )
     self.mock_fetch_url_tool = self.fetch_url_tool_patcher.start()
 
-    # Patcher for agent_tool.AgentTool
-    self.agent_tool_patcher = mock.patch.object(
-        agent_tool, 'AgentTool', autospec=True
-    )
-    self.mock_agent_tool_cls = self.agent_tool_patcher.start()
-
-    # Patcher for llm_agent.LlmAgent
-    self.llm_agent_patcher = mock.patch.object(
-        llm_agent, 'LlmAgent', autospec=True
-    )
-    self.mock_llm_agent_cls = self.llm_agent_patcher.start()
-
     # Patcher for models.simple_model_to_model
     self.model_converter_patcher = mock.patch.object(
         models, 'simple_model_to_model', autospec=True
     )
     self.mock_model_converter = self.model_converter_patcher.start()
+    # Mock the return value of simple_model_to_model to have a .value attribute
+    self.mock_model_converter.return_value.value = 'mock-model-value'
+
+    # Patcher for vertex_ai_client.create_vertex_ai_client
+    self.client_patcher = mock.patch.object(
+        vertex_ai_client, 'create_vertex_ai_client', autospec=True
+    )
+    self.mock_create_client = self.client_patcher.start()
+    self.mock_client = self.mock_create_client.return_value
+    # Mock aio.models.generate_content
+    self.mock_client.aio.models.generate_content = mock.AsyncMock()
 
   def tearDown(self):
     self.search_tool_patcher.stop()
     self.map_tool_patcher.stop()
     self.fetch_url_tool_patcher.stop()
-    self.agent_tool_patcher.stop()
-    self.llm_agent_patcher.stop()
     self.model_converter_patcher.stop()
+    self.client_patcher.stop()
     super().tearDown()
 
-  def test_generate_text_default_args(self):
-    tool = generate_text.create_generate_text_agent()
+  async def test_generate_text_default_args(self):
+    instructions = 'Test instructions'
+    response = await generate_text.generate_text(instructions)
 
     self.mock_model_converter.assert_called_once_with(models.SimpleModel.FLASH)
-    self.mock_llm_agent_cls.assert_called_once()
-    _, kwargs = self.mock_llm_agent_cls.call_args
-    self.assertEqual(kwargs['name'], 'generate_text')
-    self.assertEqual(kwargs['model'], self.mock_model_converter.return_value)
-    self.assertEqual(kwargs['tools'], [])
-    self.mock_agent_tool_cls.assert_called_once_with(
-        self.mock_llm_agent_cls.return_value
+    self.mock_create_client.assert_called_once()
+
+    self.mock_client.aio.models.generate_content.assert_called_once()
+    _, kwargs = self.mock_client.aio.models.generate_content.call_args
+
+    self.assertEqual(kwargs['model'], 'mock-model-value')
+
+
+    # Compare contents carefully or just check structure if equality is hard
+    # google.genai.types usually support equality check
+    # But let's check the structure to be safe if __eq__ is not 
+    # implemented as expected
+    actual_content = kwargs['contents']
+    self.assertEqual(actual_content.role, 'user')
+    self.assertEqual(actual_content.parts[0].text, instructions)
+
+    # Check config
+    config = kwargs['config']
+    self.assertEqual(config['tools'], [])
+    self.assertEqual(config['system_instruction'].role, 'user')
+    self.assertIn('no chit-chat', config['system_instruction'].parts[0].text)
+
+    self.assertEqual(
+        response, self.mock_client.aio.models.generate_content.return_value
     )
-    self.assertEqual(tool, self.mock_agent_tool_cls.return_value)
 
   @parameterized.named_parameters(
       dict(
@@ -97,10 +114,10 @@ class GenerateTextTest(parameterized.TestCase):
           check_return_value=False,
       ),
   )
-  def test_generate_text_with_grounding(
+  async def test_generate_text_with_grounding(
       self, kwargs, tool_attr_name, check_return_value
   ):
-    generate_text.create_generate_text_agent(**kwargs)
+    await generate_text.generate_text('instructions', **kwargs)
 
     mock_tool = getattr(self, tool_attr_name)
     if check_return_value:
@@ -109,11 +126,13 @@ class GenerateTextTest(parameterized.TestCase):
     else:
       expected_tool = mock_tool
 
-    _, call_kwargs = self.mock_llm_agent_cls.call_args
-    self.assertIn(expected_tool, call_kwargs['tools'])
+    _, call_kwargs = self.mock_client.aio.models.generate_content.call_args
+    config = call_kwargs['config']
+    self.assertIn(expected_tool, config['tools'])
 
-  def test_generate_text_all_options(self):
-    generate_text.create_generate_text_agent(
+  async def test_generate_text_all_options(self):
+    await generate_text.generate_text(
+        'instructions',
         model=models.SimpleModel.PRO,
         output_format=output_type.OutputType.FILE,
         search_grounding=True,
@@ -122,8 +141,8 @@ class GenerateTextTest(parameterized.TestCase):
     )
 
     self.mock_model_converter.assert_called_once_with(models.SimpleModel.PRO)
-    _, kwargs = self.mock_llm_agent_cls.call_args
-    tools = kwargs['tools']
+    _, kwargs = self.mock_client.aio.models.generate_content.call_args
+    tools = kwargs['config']['tools']
     self.assertIn(self.mock_search_tool.return_value, tools)
     self.assertIn(self.mock_map_tool, tools)
     self.assertIn(self.mock_fetch_url_tool, tools)

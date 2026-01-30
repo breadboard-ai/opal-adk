@@ -1,7 +1,7 @@
 import logging
 from typing import Any
-from google.adk.agents import llm_agent
-from google.adk.tools import agent_tool
+from google.genai import types
+from opal_adk.clients import vertex_ai_client
 from opal_adk.tools import fetch_url_contents_tool
 from opal_adk.tools import map_search_tool
 from opal_adk.tools import vertex_search_tool
@@ -11,9 +11,11 @@ from opal_adk.types import output_type
 _GENERATE_TEXT_INSTRUCTIONS = """You are working as part of an AI system, so
 no chit-chat and no explaining what you're doing and why. DO NOT start with 
 "Okay", or "Alright" or any preambles. Just the output, please."""
+_USER_ROLE = "user"
 
 
-def create_generate_text_agent(
+async def generate_text(
+    instructions: str,
     model: models.SimpleModel = models.SimpleModel.FLASH,
     output_format: output_type.OutputType = output_type.OutputType.TEXT,
     search_grounding: bool = False,
@@ -26,6 +28,7 @@ def create_generate_text_agent(
   content input.
 
   Args:
+    instructions: The goal for the model to accomplish.
     model: ["pro", "flash", "lite"] The Gemini model to use for text generation.
       How to choose the right model: - choose "pro" when reasoning over complex
       problems in code, math, and STEM, as well as analyzing large datasets,
@@ -72,16 +75,19 @@ def create_generate_text_agent(
     filtered_tools.append(map_search_tool.MapSearchTool)
   if url_context:
     filtered_tools.append(fetch_url_contents_tool.FetchUrlContentsTool)
-  return agent_tool.AgentTool(
-      agent=llm_agent.LlmAgent(
-          name="generate_text",
-          description=(
-              "An llm agent with specific instructions and tools for generating"
-              " a plan to create text. This agent is used as a tool by other"
-              " agents."
-          ),
-          instruction=_GENERATE_TEXT_INSTRUCTIONS,
-          model=models.simple_model_to_model(model),  # pytype: disable=wrong-arg-types
-          tools=filtered_tools,
-      )
+  vertex_client = vertex_ai_client.create_vertex_ai_client()
+  system_instructions = types.Content(
+      parts=[types.Part(text=_GENERATE_TEXT_INSTRUCTIONS)], role=_USER_ROLE
+  )
+  content = types.Content(
+      parts=[types.Part(text=instructions)], role=_USER_ROLE
+  )
+  content_config: types.GenerateContentConfigOrDict() = {
+      "system_instruction": system_instructions,
+      "tools": filtered_tools,
+  }
+  return await vertex_client.aio.models.generate_content(
+      model=models.simple_model_to_model(model).value,
+      contents=content,
+      config=content_config,
   )
