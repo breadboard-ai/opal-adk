@@ -16,6 +16,7 @@ class Models(enum.Enum):
   GEMINI_2_0_FLASH = "gemini-2.0-flash"
   GEMINI_2_5_FLASH = "gemini-2.5-flash"
   GEMINI_2_5_PRO = "gemini-2.5-pro"
+  GEMINI_3_FLASH = "gemini-3-flash-preview"
   PRO_MODEL_NAME = "gemini-3-pro-preview"
   LITE_MODEL_NAME = "gemini-2.5-flash-lite"
   FLASH_MODEL_NAME = "gemini-2.5-flash"

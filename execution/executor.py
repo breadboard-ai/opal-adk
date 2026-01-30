@@ -55,7 +55,11 @@ class AgentExecutor:
   """
 
   def __init__(
-      self, *, project_id: str | None = None, location: str | None = None
+      self,
+      *,
+      project_id: str | None = None,
+      location: str | None = None,
+      genai_api_key: str | None = None,
   ):
     """Initializes the AgentExecutor with optional project and location configurations.
 
@@ -74,6 +78,7 @@ class AgentExecutor:
         Vertex AI. If provided, `project_id` must also be provided. If not
         provided then there must be an existing environment variable set for
         GOOGLE_CLOUD_LOCATION.
+      genai_api_key: API key for using Gemini API instead of Vertex AI.
 
     Raises:
       ValueError: If only one of `project_id` or `location` is provided.
@@ -85,7 +90,10 @@ class AgentExecutor:
           f" project_id={project_id!r} and location={location!r}"
       )
 
-    if project_id and location:
+    if genai_api_key:
+      os.environ["GOOGLE_API_KEY"] = genai_api_key
+      os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "false"
+    elif project_id and location:
       os.environ["GOOGLE_CLOUD_PROJECT"] = project_id
       os.environ["GOOGLE_CLOUD_LOCATION"] = location
       os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "true"
