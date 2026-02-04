@@ -126,9 +126,10 @@ class AgentExecutor:
 
   async def execute_agent_node(
       self,
+      *,
       user_id: str,
       step: agent_step.AgentStep,
-      *,
+      session_id: str,
       execution_inputs: Mapping[str, types.Content] | None = None,
   ) -> AsyncGenerator[event.Event, None] | None:
     """Executes a Breadboard node in agent mode.
@@ -143,6 +144,8 @@ class AgentExecutor:
       user_id: The ID of the user.
       step: The opal plan step configuration. The `step_name` is used for the
         agent's name.
+      session_id: The session id to use when starting a new session or resuming
+        a previous session.
       execution_inputs: The inputs provided for the agent execution. This can
         contain additional input elements such as input images or file paths.
 
@@ -167,10 +170,19 @@ class AgentExecutor:
         sub_agents=[agent],
         max_iterations=_MAX_ITERATIONS,
     )
+    if not session_id:
+      raise ValueError(
+          "Executor: Session failed to be created or session_id not provided."
+      )
 
-    session = await self.session_service.create_session(
-        app_name=step.step_name, user_id=user_id
-    )
+    # Create a new session if a session with this id doesn't yet exist.
+    if not await self.session_service.get_session(
+        app_name=step.step_name, user_id=user_id, session_id=session_id
+    ):
+      await self.session_service.create_session(
+          app_name=step.step_name, user_id=user_id, session_id=session_id
+      )
+
     runner = runners.Runner(
         app_name=step.step_name,
         agent=orchestrator_agent,
@@ -180,7 +192,7 @@ class AgentExecutor:
 
     return runner.run_async(
         user_id=user_id,
-        session_id=session.id,
+        session_id=session_id,
         new_message=step.objective,
         invocation_id=step.invocation_id,
     )
@@ -191,6 +203,7 @@ class AgentExecutor:
       opal_step: opal_plan_step.OpalPlanStep,
       *,
       execution_inputs: Mapping[str, types.Content],
+      session_id: str | None = None,
   ) -> AsyncGenerator[event.Event, None] | None:
     """Executes an agent workflow for in-depth research and report generation.
 
@@ -206,6 +219,8 @@ class AgentExecutor:
         such as iterations.
       execution_inputs: The inputs provided for the agent execution. This will
         include inputs such as the research topic.
+      session_id: The session id to use when starting a new session or resuming
+        a previous session.
 
     Returns:
       Chunks of the agent's output as the execution progresses, typically
@@ -224,9 +239,28 @@ class AgentExecutor:
             ),
         ],
     )
-    session = await self.session_service.create_session(
-        app_name=opal_step.step_name, user_id=user_id
-    )
+    if session_id:
+      # Create a new session if a session with this id doesn't yet exist.
+      if not await self.session_service.get_session(
+          app_name=opal_step.step_name,
+          user_id=user_id,
+          session_id=session_id,
+      ):
+        session = await self.session_service.create_session(
+            app_name=opal_step.step_name,
+            user_id=user_id,
+            session_id=session_id,
+        )
+      else:
+        session = await self.session_service.get_session(
+            app_name=opal_step.step_name,
+            user_id=user_id,
+            session_id=session_id,
+        )
+    else:
+      session = await self.session_service.create_session(
+          app_name=opal_step.step_name, user_id=user_id
+      )
     runner = runners.Runner(
         app_name=opal_step.step_name,
         agent=deep_research_agent,
@@ -242,6 +276,7 @@ class AgentExecutor:
       )
 
     research_query = execution_inputs[input_param]
+    assert session is not None
     return runner.run_async(
         user_id=user_id,
         session_id=session.id,
