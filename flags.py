@@ -44,6 +44,15 @@ _OPAL_ADK_DEBUG_LOGGING = flags.DEFINE_bool(
         " grained ADK logs."
     ),
 )
+_OPAL_ADK_ENVIRONMENT = flags.DEFINE_string(
+    "opal_adk_environment",
+    required=False,
+    default="dev",
+    help=(
+        "The current environment running Opal ADK. This should be dev,"
+        " autopush,staging or prod."
+    ),
+)
 
 
 def get_service_account() -> ServiceAccount:
@@ -80,3 +89,9 @@ def get_debug_logging() -> bool:
   except flags.UnparsedFlagAccessError:
     return _OPAL_ADK_DEBUG_LOGGING.default
 
+
+def get_opal_adk_environment() -> str:
+  try:
+    return _OPAL_ADK_ENVIRONMENT.value
+  except flags.UnparsedFlagAccessError:
+    return _OPAL_ADK_ENVIRONMENT.default
