@@ -8,26 +8,6 @@ from google.genai import errors as genai_errors
 
 from google.rpc import code_pb2
 
-# copybara:strip_begin
-from google3.learning.language.tunelab.contrib.demos.intent2app.infra import environment_util
-
-# copyabara:strip_begin
-PLANNER_ERROR_MESSAGE = (
-    ' We were unable to create a plan to fulfill your request, please try'
-    ' again. If you see this error repeatedly, try rewording the request.'
-)
-SAFETY_ERROR_MESSAGE_APP_CREATION = (
-    ' This application may violate usage policies. Please try a different'
-    ' intent.'
-)
-COMPLEX_FIT_ERROR_MESSAGE = (
-    ' This application is too complex for the current execution engine.'
-)
-MISSING_APIS_FIT_ERROR_MESSAGE = (
-    ' This application requires tools that are not supported.'
-)
-# copybara:strip_end
-
 
 GENERIC_ERROR_MESSAGE = (
     ' An unexpected internal error occurred. Please try again.'
@@ -62,9 +42,6 @@ class OpalAdkError(Exception):
       status_message: str = GENERIC_ERROR_MESSAGE,
       status_code: code_pb2.Code = code_pb2.UNKNOWN,
       details: str = '',
-      # copybara:strip_begin
-      internal_details: str = '',
-      # copybara:strip_end
       rewritten_intent: str = '',
   ):
     """Initializes the OpalAdkError.
@@ -77,17 +54,9 @@ class OpalAdkError(Exception):
       status_code: The RPC error code.
       details: Any dynamic details about the error. Should not contain any
         internal information.
-      # copybara:strip_begin
-      internal_details: Any dynamic details about the error that include
-        google-internal specific information. Defaults to details.
-      # copybara:strip_end
       rewritten_intent: Optional rewritten intent suggestion for validation
         errors.
     """
-    # copybara:strip_begin
-    if not environment_util.is_prod_environment():
-      internal_details = logged
-    # copybara:strip_end
     if logged is None:
       logged = f'{status_message}'
       if details:
@@ -96,9 +65,6 @@ class OpalAdkError(Exception):
     self.status_message = status_message
     self.error_code = status_code
     self.details = details
-    # copybara:strip_begin
-    self.internal_details = internal_details
-    # copybara:strip_end
     self.rewritten_intent = rewritten_intent
 
   def external_message(self) -> str:
@@ -109,42 +75,6 @@ class OpalAdkError(Exception):
         'details': self.details,
     }
     return json.dumps(external_messages)
-
-
-# copybara:strip_begin
-class InternalDetailsError(OpalAdkError):
-  """An error that contains details that are only visible to googlers."""
-
-  def __init__(self, logged: str, status_message: str = GENERIC_ERROR_MESSAGE):
-    """Initializes the InternalDetailsError.
-
-    Args:
-      logged: Error message to be logged and returned to internal users.
-      status_message: The static human-readable "debug message" to be shown to
-        the user. Should contain an actionable resolution to the error.
-    """
-    # copybara:strip_begin
-    if not environment_util.is_prod_environment():
-      super().__init__(
-          logged=logged,
-          status_message=status_message,
-          status_code=code_pb2.INTERNAL,
-          details='',
-          internal_details=logged,
-      )
-      return
-    # copybara:strip_end
-
-    super().__init__(
-        logged=None,
-        status_message=GENERIC_ERROR_MESSAGE,
-        status_code=code_pb2.UNKNOWN,
-        details='',
-        internal_details=logged,
-    )
-
-
-# copybara:strip_end
 
 
 class ChatError(OpalAdkError):
@@ -187,19 +117,12 @@ class ChatError(OpalAdkError):
         logged_message += f'Details: {error.details}. '
         chat_message += f'Details: {error.details}. '
 
-      # copybara:strip_begin
-      if error.internal_details and not environment_util.is_prod_environment():
-        logged_message += f'Internal details: {error.internal_details}'
-      # copybara:strip_end
     super().__init__(
         logged=logged_message,
         status_message=error.status_message,
         status_code=error.error_code,
         # The details field is shown to users
         details=full_chat_message or chat_message,
-        # copybara:strip_begin
-        internal_details=error.internal_details,
-        # copybara:strip_end
     )
 
 
@@ -217,27 +140,18 @@ def get_opal_adk_error(error: Exception) -> OpalAdkError:
               ' again later.'
           ),
           status_code=code_pb2.RESOURCE_EXHAUSTED,
-          # copybara:strip_begin
-          internal_details=str(error),
-          # copybara:strip_end
       )
     else:
       return OpalAdkError(
           logged=full_traceback,
           status_message=GENERIC_MODEL_ERROR_MESSAGE,
           status_code=code_pb2.INTERNAL,
-          # copybara:strip_begin
-          internal_details=str(error),
-          # copybara:strip_end
       )
   if isinstance(error, genai_errors.ServerError):
     return OpalAdkError(
         logged=full_traceback,
         status_message=GENERIC_MODEL_ERROR_MESSAGE,
         status_code=code_pb2.INTERNAL,
-        # copybara:strip_begin
-        internal_details=str(error),
-        # copybara:strip_end
     )
   logging.info('Unhandled error (type %s): %s', type(error), error)
   # Return a generic error by default.
@@ -248,10 +162,5 @@ def get_error_as_chat_message(error: Exception) -> str:
   """Returns a chat message for the given error."""
   error = get_opal_adk_error(error)
   formatted_error = error.status_message + '\n' + error.details
-
-  # copybara:strip_begin
-  if not environment_util.is_prod_environment():
-    formatted_error = error.status_message + '\n' + error.internal_details
-  # copybara:strip_end
 
   return formatted_error

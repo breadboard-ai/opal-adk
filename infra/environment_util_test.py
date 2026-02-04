@@ -5,11 +5,6 @@ from unittest import mock
 from absl.testing import absltest
 from absl.testing import parameterized
 
-# copybara:strip_begin
-from opal_adk import flags
-from opal_adk.infra import environment_util
-# copybara:strip_end
-
 
 class EnvironmentUtilTest(parameterized.TestCase):
 
