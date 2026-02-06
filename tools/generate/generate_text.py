@@ -1,3 +1,5 @@
+"""Tool for generating text with grounding support."""
+
 import logging
 from typing import Any
 from google.genai import types
@@ -72,9 +74,9 @@ async def generate_text(
   if search_grounding:
     filtered_tools.append(vertex_search_tool.search_agent_tool())
   if maps_grounding:
-    filtered_tools.append(map_search_tool.MapSearchTool)
+    filtered_tools.append(map_search_tool.MapSearchTool())
   if url_context:
-    filtered_tools.append(fetch_url_contents_tool.FetchUrlContentsTool)
+    filtered_tools.append(fetch_url_contents_tool.FetchUrlContentsTool())
   vertex_client = vertex_ai_client.create_vertex_ai_client()
   system_instructions = types.Content(
       parts=[types.Part(text=_GENERATE_TEXT_INSTRUCTIONS)], role=_USER_ROLE
@@ -82,12 +84,14 @@ async def generate_text(
   content = types.Content(
       parts=[types.Part(text=instructions)], role=_USER_ROLE
   )
-  content_config: types.GenerateContentConfigOrDict() = {
-      "system_instruction": system_instructions,
-      "tools": filtered_tools,
-  }
+  content_config = types.GenerateContentConfig(
+      system_instruction=system_instructions,
+      tools=filtered_tools,
+  )
+
+  model_id = models.simple_model_to_model(model).value
   return await vertex_client.aio.models.generate_content(
-      model=models.simple_model_to_model(model).value,
+      model=model_id,
       contents=content,
       config=content_config,
   )

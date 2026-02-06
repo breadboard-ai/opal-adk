@@ -27,14 +27,12 @@ class GenerateTextTest(
     self.mock_search_tool = self.search_tool_patcher.start()
 
     # Patcher for map_search_tool.MapSearchTool
-    self.map_tool_patcher = mock.patch.object(
-        map_search_tool, 'MapSearchTool', autospec=True
-    )
+    self.map_tool_patcher = mock.patch.object(map_search_tool, 'MapSearchTool')
     self.mock_map_tool = self.map_tool_patcher.start()
 
     # Patcher for fetch_url_contents_tool.FetchUrlContentsTool
     self.fetch_url_tool_patcher = mock.patch.object(
-        fetch_url_contents_tool, 'FetchUrlContentsTool', autospec=True
+        fetch_url_contents_tool, 'FetchUrlContentsTool'
     )
     self.mock_fetch_url_tool = self.fetch_url_tool_patcher.start()
 
@@ -86,9 +84,9 @@ class GenerateTextTest(
 
     # Check config
     config = kwargs['config']
-    self.assertEqual(config['tools'], [])
-    self.assertEqual(config['system_instruction'].role, 'user')
-    self.assertIn('no chit-chat', config['system_instruction'].parts[0].text)
+    self.assertEqual(config.tools, [])
+    self.assertEqual(config.system_instruction.role, 'user')
+    self.assertIn('no chit-chat', config.system_instruction.parts[0].text)
 
     self.assertEqual(
         response, self.mock_client.aio.models.generate_content.return_value
@@ -105,13 +103,13 @@ class GenerateTextTest(
           testcase_name='maps_grounding',
           kwargs={'maps_grounding': True},
           tool_attr_name='mock_map_tool',
-          check_return_value=False,
+          check_return_value=True,
       ),
       dict(
           testcase_name='url_context',
           kwargs={'url_context': True},
           tool_attr_name='mock_fetch_url_tool',
-          check_return_value=False,
+          check_return_value=True,
       ),
   )
   async def test_generate_text_with_grounding(
@@ -128,7 +126,7 @@ class GenerateTextTest(
 
     _, call_kwargs = self.mock_client.aio.models.generate_content.call_args
     config = call_kwargs['config']
-    self.assertIn(expected_tool, config['tools'])
+    self.assertIn(expected_tool, config.tools)
 
   async def test_generate_text_all_options(self):
     await generate_text.generate_text(
@@ -142,10 +140,10 @@ class GenerateTextTest(
 
     self.mock_model_converter.assert_called_once_with(models.SimpleModel.PRO)
     _, kwargs = self.mock_client.aio.models.generate_content.call_args
-    tools = kwargs['config']['tools']
+    tools = kwargs['config'].tools
     self.assertIn(self.mock_search_tool.return_value, tools)
-    self.assertIn(self.mock_map_tool, tools)
-    self.assertIn(self.mock_fetch_url_tool, tools)
+    self.assertIn(self.mock_map_tool.return_value, tools)
+    self.assertIn(self.mock_fetch_url_tool.return_value, tools)
     self.assertLen(tools, 3)
 
 

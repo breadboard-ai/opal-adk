@@ -18,7 +18,7 @@ def create_vertex_ai_client() -> genai.Client:
   """
   try:
     vertex_client = genai.Client(
-        vertexai=True,
+        vertexai=False,
         project=flags.get_project_id(),
         location=flags.get_location(),
     )
