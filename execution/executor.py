@@ -160,7 +160,7 @@ class AgentExecutor:
         execution_inputs,
     )
     logging.info("executor: model_constraint: %s", step.model_constraint)
-    agent = node_agent.node_agent(step.model_constraint)
+    agent = node_agent.node_agent(step.model_constraint, ui_type=step.ui_type)
     orchestrator_agent = loop_agent.LoopAgent(
         name="opal_adk_node_agent_orchestrator",
         description=(

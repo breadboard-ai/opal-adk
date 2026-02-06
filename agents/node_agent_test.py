@@ -6,6 +6,7 @@ from google.adk.planners import built_in_planner
 from opal_adk.agents import node_agent
 from opal_adk.types import model_constraint
 from opal_adk.types import models
+from opal_adk.types import ui_type as opal_adk_ui_types
 from opal_adk.util import tool_utils
 
 from google3.testing.pybase import googletest
@@ -17,6 +18,9 @@ class NodeAgentTest(parameterized.TestCase):
     super().setUp()
     self.mock_get_tools = mock.patch.object(
         tool_utils, "get_tools_with_model_constraints"
+    ).start()
+    self.mock_get_tools_for_ui_type = mock.patch.object(
+        tool_utils, "get_tools_for_ui_type"
     ).start()
     self.mock_llm_agent_cls = mock.patch.object(llm_agent, "LlmAgent").start()
     self.mock_planner_cls = mock.patch.object(
@@ -31,15 +35,23 @@ class NodeAgentTest(parameterized.TestCase):
   )
   def test_node_agent_initialization_constraints(self, constraint):
     self.mock_get_tools.return_value = []
+    self.mock_get_tools_for_ui_type.return_value = []
 
-    node_agent.node_agent(constraint)
+    node_agent.node_agent(constraint, opal_adk_ui_types.UIType.CHAT)
 
     self.mock_get_tools.assert_called_once_with(constraint)
+    self.mock_get_tools_for_ui_type.assert_called_once_with(
+        ui_type=opal_adk_ui_types.UIType.CHAT
+    )
 
   def test_node_agent_initialization_default_model(self):
     self.mock_get_tools.return_value = []
+    self.mock_get_tools_for_ui_type.return_value = []
 
-    node_agent.node_agent(model_constraint.ModelConstraint.UNSPECIFIED)
+    node_agent.node_agent(
+        model_constraint.ModelConstraint.UNSPECIFIED,
+        opal_adk_ui_types.UIType.CHAT,
+    )
 
     self.mock_llm_agent_cls.assert_called_once()
     _, kwargs = self.mock_llm_agent_cls.call_args
@@ -47,10 +59,13 @@ class NodeAgentTest(parameterized.TestCase):
 
   def test_node_agent_initialization_custom_model(self):
     self.mock_get_tools.return_value = []
+    self.mock_get_tools_for_ui_type.return_value = []
     custom_model = models.Models.GEMINI_2_5_PRO
 
     node_agent.node_agent(
-        model_constraint.ModelConstraint.UNSPECIFIED, agent_model=custom_model
+        model_constraint.ModelConstraint.UNSPECIFIED,
+        opal_adk_ui_types.UIType.CHAT,
+        agent_model=custom_model,
     )
 
     self.mock_llm_agent_cls.assert_called_once()
@@ -62,14 +77,23 @@ class NodeAgentTest(parameterized.TestCase):
         ("instruction1", ["tool1"]),
         ("instruction2", ["tool2", "tool3"]),
     ]
+    self.mock_get_tools_for_ui_type.return_value = [
+        ("ui_instruction", ["ui_tool"]),
+    ]
 
-    node_agent.node_agent(model_constraint.ModelConstraint.UNSPECIFIED)
+    node_agent.node_agent(
+        model_constraint.ModelConstraint.UNSPECIFIED,
+        opal_adk_ui_types.UIType.CHAT,
+    )
 
     self.mock_llm_agent_cls.assert_called_once()
     _, kwargs = self.mock_llm_agent_cls.call_args
 
-    self.assertEqual(kwargs["static_instruction"], "instruction1\ninstruction2")
-    self.assertEqual(kwargs["tools"], ["tool1", "tool2", "tool3"])
+    self.assertEqual(
+        kwargs["static_instruction"],
+        "instruction1\ninstruction2\nui_instruction",
+    )
+    self.assertEqual(kwargs["tools"], ["tool1", "tool2", "tool3", "ui_tool"])
     self.assertEqual(kwargs["name"], "opal_adk_node_agent")
     self.assertEqual(kwargs["output_key"], "opal_adk_node_agent_output")
     self.assertIn("Iteratively works", kwargs["description"])

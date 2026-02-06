@@ -6,7 +6,10 @@ from google.adk.planners import built_in_planner
 from google.genai import types
 from opal_adk.types import model_constraint
 from opal_adk.types import models
+from opal_adk.types import ui_type as opal_adk_ui_types
 from opal_adk.util import tool_utils
+
+UIType = opal_adk_ui_types.UIType
 
 AGENT_NAME = "opal_adk_node_agent"
 OUTPUT_KEY = "opal_adk_node_agent_output"
@@ -16,6 +19,7 @@ _TOP_P = 1
 
 def node_agent(
     constraint: model_constraint.ModelConstraint,
+    ui_type: UIType,
     agent_model: models.Models = models.Models.GEMINI_3_FLASH,
 ) -> llm_agent.LlmAgent:
   """Creates an LlmAgent configured for writing research reports.
@@ -26,6 +30,9 @@ def node_agent(
   Args:
     constraint: The model constraint that will determine the tools available to
       the agent.
+    ui_type: The UIType of the node. This can be either A2UI, CHAT or
+      UNSPECIFIED. The type of UI will determine the tools available to the
+      agent.
     agent_model: The model to use for the LLM agent. Defaults to
       GEMINI_2_5_FLASH.
 
@@ -38,19 +45,21 @@ def node_agent(
   instructions_and_tools = tool_utils.get_tools_with_model_constraints(
       constraint
   )
-  logging.info("node_agent: instructions_and_tools %s", instructions_and_tools)
-  for agent_instruction, tool_list in instructions_and_tools:
+  ui_type_instructions_and_tools = tool_utils.get_tools_for_ui_type(
+      ui_type=ui_type
+  )
+  logging.debug("node_agent: instructions_and_tools %s", instructions_and_tools)
+  for agent_instruction, tool_list in (
+      instructions_and_tools + ui_type_instructions_and_tools
+  ):
     agent_instructions.append(agent_instruction)
-    tools = tools + tool_list
+    tools.extend(tool_list)
+
   instructions = "\n".join(agent_instructions)
   config = types.GenerateContentConfig(
       temperature=1.0,
       top_p=1,
-      tool_config={
-          "function_calling_config": {
-              "mode": "ANY"
-          }
-      },
+      tool_config={"function_calling_config": {"mode": "ANY"}},
   )
   return llm_agent.LlmAgent(
       name=AGENT_NAME,
