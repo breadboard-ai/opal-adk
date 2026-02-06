@@ -18,8 +18,8 @@ _USER_ROLE = "user"
 
 async def generate_text(
     instructions: str,
-    model: models.SimpleModel = models.SimpleModel.FLASH,
-    output_format: output_type.OutputType = output_type.OutputType.TEXT,
+    model: str = models.SimpleModel.FLASH.value,
+    output_format: str = output_type.OutputType.TEXT.value,
     search_grounding: bool = False,
     maps_grounding: bool = False,
     url_context: bool = False,
@@ -69,7 +69,25 @@ async def generate_text(
     An `AgentTool` instance configured for text generation with the specified
     grounding and context options.
   """
-  logging.info("generate_text: output_format: %s", output_format)
+  try:
+    model_enum: models.SimpleModel = models.SimpleModel(model)
+  except ValueError:
+    raise ValueError(
+        f"generate_text: Invalid model: {model}. Must be one of"
+        f" {[model.value for model in models.SimpleModel]}"
+    )
+
+  try:
+    output_format_enum: output_type.OutputType = output_type.OutputType(
+        output_format
+    )
+  except ValueError:
+    raise ValueError(
+        f"generate_text: Invalid output_format: {output_format}. Must be one of"
+        f" {[type.value for type in output_type.OutputType]}"
+    )
+
+  logging.info("generate_text: output_format: %s", output_format_enum)
   filtered_tools = []
   if search_grounding:
     filtered_tools.append(vertex_search_tool.search_agent_tool())
@@ -89,7 +107,7 @@ async def generate_text(
       tools=filtered_tools,
   )
 
-  model_id = models.simple_model_to_model(model).value
+  model_id = models.simple_model_to_model(model_enum).value
   return await vertex_client.aio.models.generate_content(
       model=model_id,
       contents=content,

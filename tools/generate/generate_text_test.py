@@ -94,6 +94,22 @@ class GenerateTextTest(
 
   @parameterized.named_parameters(
       dict(
+          testcase_name='invalid_model',
+          kwargs={'model': 'invalid-model'},
+          error_msg='Invalid model: invalid-model',
+      ),
+      dict(
+          testcase_name='invalid_output_format',
+          kwargs={'output_format': 'invalid-format'},
+          error_msg='Invalid output_format: invalid-format',
+      ),
+  )
+  async def test_generate_text_invalid_args(self, kwargs, error_msg):
+    with self.assertRaisesRegex(ValueError, error_msg):
+      await generate_text.generate_text('instructions', **kwargs)
+
+  @parameterized.named_parameters(
+      dict(
           testcase_name='search_grounding',
           kwargs={'search_grounding': True},
           tool_attr_name='mock_search_tool',
@@ -131,8 +147,8 @@ class GenerateTextTest(
   async def test_generate_text_all_options(self):
     await generate_text.generate_text(
         'instructions',
-        model=models.SimpleModel.PRO,
-        output_format=output_type.OutputType.FILE,
+        model=models.SimpleModel.PRO.value,
+        output_format=output_type.OutputType.FILE.value,
         search_grounding=True,
         maps_grounding=True,
         url_context=True,
