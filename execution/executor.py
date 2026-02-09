@@ -16,6 +16,7 @@ from opal_adk.agents import report_writing_agent
 from opal_adk.agents import research_agent
 from opal_adk.data_model import agent_step
 from opal_adk.data_model import opal_plan_step
+from opal_adk.types import ui_type
 
 _PARAMETER_KEY = "query"
 _MAX_ITERATIONS = 10
@@ -129,7 +130,7 @@ class AgentExecutor:
       *,
       user_id: str,
       step: agent_step.AgentStep,
-      session_id: str,
+      session_id: str | None = None,
       execution_inputs: Mapping[str, types.Content] | None = None,
   ) -> AsyncGenerator[event.Event, None] | None:
     """Executes a Breadboard node in agent mode.
@@ -145,7 +146,8 @@ class AgentExecutor:
       step: The opal plan step configuration. The `step_name` is used for the
         agent's name.
       session_id: The session id to use when starting a new session or resuming
-        a previous session.
+        a previous session. If a session id is not provided chat features will
+        not be available.
       execution_inputs: The inputs provided for the agent execution. This can
         contain additional input elements such as input images or file paths.
 
@@ -170,9 +172,9 @@ class AgentExecutor:
         sub_agents=[agent],
         max_iterations=_MAX_ITERATIONS,
     )
-    if not session_id:
+    if not session_id and step.ui_type == ui_type.UIType.CHAT:
       raise ValueError(
-          "Executor: Session failed to be created or session_id not provided."
+          "Executor: session_id must be provided for chat UI type."
       )
 
     # Create a new session if a session with this id doesn't yet exist.
