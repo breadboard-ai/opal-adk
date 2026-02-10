@@ -5,10 +5,17 @@ from google import genai
 from opal_adk import flags
 
 
-def create_vertex_ai_client() -> genai.Client:
+def create_vertex_ai_client(use_vertex: bool = False) -> genai.Client:
   """Creates a Vertex AI client using the genai library.
 
   The client is initialized with project and location from opal_adk flags.
+
+  Args:
+    use_vertex: If True the client will work with the Cloud Vertex API. If False
+      it will use the Gemini API.  If using the Gemini API an API key will need
+      to be provided in environmental variables. If Vertex AI API is being used
+      a Google Cloud project and location will need to be provided in
+      environmental variables.
 
   Returns:
     A genai.Client instance configured for Vertex AI.
@@ -18,7 +25,7 @@ def create_vertex_ai_client() -> genai.Client:
   """
   try:
     vertex_client = genai.Client(
-        vertexai=False,
+        vertexai=use_vertex,
         project=flags.get_project_id(),
         location=flags.get_location(),
     )
