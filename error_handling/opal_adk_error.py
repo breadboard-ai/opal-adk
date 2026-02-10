@@ -38,6 +38,7 @@ class OpalAdkError(Exception):
 
   def __init__(
       self,
+      *,
       logged: str | None = None,
       status_message: str = GENERIC_ERROR_MESSAGE,
       status_code: code_pb2.Code = code_pb2.UNKNOWN,
