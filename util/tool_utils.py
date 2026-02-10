@@ -9,47 +9,33 @@ from opal_adk.tools.generate import instructions as generate_instructions
 from opal_adk.tools.system import instructions as system_instructions
 from opal_adk.tools.system import objective_failed
 from opal_adk.tools.system import objective_fulfilled
-from opal_adk.types import model_constraint
 from opal_adk.types import ui_type as opal_adk_ui_type
 
 UIType = opal_adk_ui_type.UIType
 
 
-def get_tools_with_model_constraints(
-    constraint: model_constraint.ModelConstraint,
-) -> List[Tuple[str, List[Callable[..., Any]]]]:
-  """Returns instructions and callables for tools based on model constraints.
+def get_tools() -> List[Tuple[str, List[Callable[..., Any]]]]:
+  """Returns all available instructions and tools.
 
   Args:
-    constraint: The model constraint to filter tools by.
 
   Returns:
     A list of tuples, each containing system instructions (str) and a list of
     tool callables.
   """
-  match constraint:
-    case (
-        model_constraint.ModelConstraint.UNSPECIFIED
-        | model_constraint.ModelConstraint.TEXT_FLASH
-        | model_constraint.ModelConstraint.TEXT_PRO
-        | model_constraint.ModelConstraint.IMAGE
-        | model_constraint.ModelConstraint.VIDEO
-        | model_constraint.ModelConstraint.SPEECH
-        | model_constraint.ModelConstraint.MUSIC
-    ):
-      return [
-          (
-              system_instructions.SYSTEM_FUNCTIONS_INSTRUCTIONS,
-              [
-                  objective_failed.objective_failed,
-                  objective_fulfilled.objective_fulfilled,
-              ],
-          ),
-          (
-              generate_instructions.GENERATE_INSTRUCTIONS,
-              [generate_text.generate_text],
-          ),
-      ]
+  return [
+      (
+          system_instructions.SYSTEM_FUNCTIONS_INSTRUCTIONS,
+          [
+              objective_failed.objective_failed,
+              objective_fulfilled.objective_fulfilled,
+          ],
+      ),
+      (
+          generate_instructions.GENERATE_INSTRUCTIONS,
+          [generate_text.generate_text],
+      ),
+  ]
 
 
 def get_tools_for_ui_type(

@@ -4,8 +4,8 @@ from absl.testing import absltest
 from absl.testing import parameterized
 from google.adk.agents import llm_agent
 from google.adk.planners import built_in_planner
-from opal_adk.types import models
 from opal_adk.agents import report_writing_agent
+from opal_adk.types import models
 
 
 class ReportWritingAgentTest(parameterized.TestCase):

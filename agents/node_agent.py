@@ -4,7 +4,6 @@ import logging
 from google.adk.agents import llm_agent
 from google.adk.planners import built_in_planner
 from google.genai import types
-from opal_adk.types import model_constraint
 from opal_adk.types import models
 from opal_adk.types import ui_type as opal_adk_ui_types
 from opal_adk.util import tool_utils
@@ -18,7 +17,6 @@ _TOP_P = 1
 
 
 def node_agent(
-    constraint: model_constraint.ModelConstraint,
     ui_type: UIType,
     agent_model: models.Models = models.Models.GEMINI_3_FLASH,
 ) -> llm_agent.LlmAgent:
@@ -28,8 +26,6 @@ def node_agent(
   detailed, and well-cited research report in markdown format.
 
   Args:
-    constraint: The model constraint that will determine the tools available to
-      the agent.
     ui_type: The UIType of the node. This can be either A2UI, CHAT or
       UNSPECIFIED. The type of UI will determine the tools available to the
       agent.
@@ -42,9 +38,7 @@ def node_agent(
   thinking_config = types.ThinkingConfig(include_thoughts=True)
   agent_instructions = []
   tools = []
-  instructions_and_tools = tool_utils.get_tools_with_model_constraints(
-      constraint
-  )
+  instructions_and_tools = tool_utils.get_tools()
   ui_type_instructions_and_tools = tool_utils.get_tools_for_ui_type(
       ui_type=ui_type
   )

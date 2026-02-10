@@ -4,7 +4,6 @@ from absl.testing import parameterized
 from google.adk.agents import llm_agent
 from google.adk.planners import built_in_planner
 from opal_adk.agents import node_agent
-from opal_adk.types import model_constraint
 from opal_adk.types import models
 from opal_adk.types import ui_type as opal_adk_ui_types
 from opal_adk.util import tool_utils
@@ -16,9 +15,7 @@ class NodeAgentTest(parameterized.TestCase):
 
   def setUp(self):
     super().setUp()
-    self.mock_get_tools = mock.patch.object(
-        tool_utils, "get_tools_with_model_constraints"
-    ).start()
+    self.mock_get_tools = mock.patch.object(tool_utils, "get_tools").start()
     self.mock_get_tools_for_ui_type = mock.patch.object(
         tool_utils, "get_tools_for_ui_type"
     ).start()
@@ -28,18 +25,13 @@ class NodeAgentTest(parameterized.TestCase):
     ).start()
     self.addCleanup(mock.patch.stopall)
 
-  @parameterized.parameters(
-      model_constraint.ModelConstraint.UNSPECIFIED,
-      model_constraint.ModelConstraint.TEXT_FLASH,
-      model_constraint.ModelConstraint.IMAGE,
-  )
-  def test_node_agent_initialization_constraints(self, constraint):
+  def test_node_agent_initialization(self):
     self.mock_get_tools.return_value = []
     self.mock_get_tools_for_ui_type.return_value = []
 
-    node_agent.node_agent(constraint, opal_adk_ui_types.UIType.CHAT)
+    node_agent.node_agent(opal_adk_ui_types.UIType.CHAT)
 
-    self.mock_get_tools.assert_called_once_with(constraint)
+    self.mock_get_tools.assert_called_once()
     self.mock_get_tools_for_ui_type.assert_called_once_with(
         ui_type=opal_adk_ui_types.UIType.CHAT
     )
@@ -49,7 +41,6 @@ class NodeAgentTest(parameterized.TestCase):
     self.mock_get_tools_for_ui_type.return_value = []
 
     node_agent.node_agent(
-        model_constraint.ModelConstraint.UNSPECIFIED,
         opal_adk_ui_types.UIType.CHAT,
     )
 
@@ -63,7 +54,6 @@ class NodeAgentTest(parameterized.TestCase):
     custom_model = models.Models.GEMINI_2_5_PRO
 
     node_agent.node_agent(
-        model_constraint.ModelConstraint.UNSPECIFIED,
         opal_adk_ui_types.UIType.CHAT,
         agent_model=custom_model,
     )
@@ -82,7 +72,6 @@ class NodeAgentTest(parameterized.TestCase):
     ]
 
     node_agent.node_agent(
-        model_constraint.ModelConstraint.UNSPECIFIED,
         opal_adk_ui_types.UIType.CHAT,
     )
 

@@ -7,7 +7,6 @@ to be performed.
 import dataclasses
 
 from google.genai import types
-from opal_adk.types import model_constraint as mc
 from opal_adk.types import ui_type as ut
 
 
@@ -18,9 +17,6 @@ class AgentStep:
   step_name: str
   objective: types.Content
   ui_prompt: types.Content
-  model_constraint: mc.ModelConstraint = (
-      mc.ModelConstraint.UNSPECIFIED
-  )
   invocation_id: str | None = None
   input_parameters: list[str] = dataclasses.field(default_factory=list)
   output: str = ''
@@ -40,7 +36,6 @@ class AgentStep:
       <step_name>{self.step_name}</step_name>
       <objective>{self.objective}</objective>
       {system_prompt_step}
-      <model_constraint>{self.model_constraint.value}</model_constraint>
       <invocation_id>{self.invocation_id}</invocation_id>
       <input_parameters>{self.input_parameters}</input_parameters>
       <output>{self.output}</output>

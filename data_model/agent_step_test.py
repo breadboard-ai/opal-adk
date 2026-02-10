@@ -2,7 +2,6 @@
 
 from absl.testing import absltest
 from opal_adk.data_model import agent_step
-from opal_adk.types import model_constraint as mc
 from opal_adk.types import ui_type as ut
 
 
@@ -12,7 +11,6 @@ class AgentStepTest(absltest.TestCase):
     step = agent_step.AgentStep(
         step_name='step1',
         objective='objective1',
-        model_constraint=mc.ModelConstraint.TEXT_FLASH,
         invocation_id='inv1',
         input_parameters=['param1'],
         output='output1',
@@ -26,7 +24,6 @@ class AgentStepTest(absltest.TestCase):
       <step_name>step1</step_name>
       <objective>objective1</objective>
       <system_prompt>sys_prompt1</system_prompt>
-      <model_constraint>text_flash</model_constraint>
       <invocation_id>inv1</invocation_id>
       <input_parameters>['param1']</input_parameters>
       <output>output1</output>
@@ -44,7 +41,6 @@ class AgentStepTest(absltest.TestCase):
     step = agent_step.AgentStep(
         step_name='step1',
         objective='objective1',
-        model_constraint=mc.ModelConstraint.TEXT_FLASH,
         ui_prompt='prompt',
     )
     # Check that system prompt is empty tag by default
