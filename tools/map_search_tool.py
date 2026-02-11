@@ -12,6 +12,9 @@ from google.adk.tools import tool_context
 import googlemaps
 from googlemaps import exceptions
 from opal_adk import flags
+from opal_adk.error_handling import opal_adk_error
+
+from google.rpc import code_pb2
 
 
 def _format_results(query: str, results: dict[str, Any] | str) -> str:
@@ -91,7 +94,13 @@ class MapSearchTool(base_tool.BaseTool):
     """
     api_key = flags.get_maps_api_key()
     if not api_key:
-      raise ValueError("Google Maps Platform API key is required.")
+      raise opal_adk_error.OpalAdkError(
+          logged="map_search_tool: Google Maps Platform API key is required.",
+          status_message=(
+              "map_search_tool: Google Maps Platform API key is required."
+          ),
+          status_code=code_pb2.FAILED_PRECONDITION,
+      )
 
     gmaps = googlemaps.Client(key=api_key)
 
@@ -100,7 +109,15 @@ class MapSearchTool(base_tool.BaseTool):
       return {"result": _format_results(query, results)}
     except exceptions.ApiError as e:
       logging.exception("Google Maps API Error: %s", e)
-      return {}
+      raise opal_adk_error.OpalAdkError(
+          status_message="map_search_tool: Error with Google Maps API key.",
+          status_code=code_pb2.FAILED_PRECONDITION,
+          internal_details=f"map_search_tool: error details: {e}",
+      ) from e
     except Exception as e:
       logging.exception("An unexpected error occurred: %s", e)
-      return {}
+      raise opal_adk_error.OpalAdkError(
+          status_message="maps_search_tool: Internal error.",
+          status_code=code_pb2.INTERNAL,
+          internal_details=f"map_search_tool: Intenal error details: {e}",
+      ) from e

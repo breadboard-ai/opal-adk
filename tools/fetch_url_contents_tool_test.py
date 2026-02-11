@@ -1,12 +1,13 @@
 """Unit tests for fetch_url_contents."""
 
-import unittest
 from unittest import mock
+from absl.testing import absltest
+from opal_adk.error_handling import opal_adk_error
 from opal_adk.tools import fetch_url_contents_tool
 import requests
 
 
-class FetchUrlContentsTest(unittest.TestCase):
+class FetchUrlContentsTest(absltest.TestCase):
 
   @mock.patch('requests.get')
   def test_fetch_url_success(self, mock_get):
@@ -38,8 +39,9 @@ class FetchUrlContentsTest(unittest.TestCase):
     )
 
     url = 'http://example.com'
-    with self.assertRaises(requests.exceptions.RequestException):
+    with self.assertRaises(opal_adk_error.OpalAdkError) as cm:
       fetch_url_contents_tool.fetch_url(url)
+    self.assertIn('Failed to fetch', str(cm.exception.details))
 
   def test_convert_to_markdown(self):
     """Tests that convert_to_markdown converts HTML to markdown."""
@@ -58,9 +60,10 @@ class FetchUrlContentsTest(unittest.TestCase):
     mock_get.return_value = mock_response
 
     url = 'http://example.com/404'
-    with self.assertRaises(requests.exceptions.HTTPError):
+    with self.assertRaises(opal_adk_error.OpalAdkError) as cm:
       fetch_url_contents_tool.fetch_url(url)
+    self.assertIn('404 Not Found', str(cm.exception.details))
 
 
 if __name__ == '__main__':
-  unittest.main()
+  absltest.main()

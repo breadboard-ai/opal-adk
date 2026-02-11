@@ -6,6 +6,7 @@ from unittest import mock
 from absl.testing import absltest
 from absl.testing import parameterized
 from opal_adk.clients import vertex_ai_client
+from opal_adk.error_handling import opal_adk_error
 from opal_adk.tools import fetch_url_contents_tool
 from opal_adk.tools import map_search_tool
 from opal_adk.tools import vertex_search_tool
@@ -73,10 +74,9 @@ class GenerateTextTest(
 
     self.assertEqual(kwargs['model'], 'mock-model-value')
 
-
     # Compare contents carefully or just check structure if equality is hard
     # google.genai.types usually support equality check
-    # But let's check the structure to be safe if __eq__ is not 
+    # But let's check the structure to be safe if __eq__ is not
     # implemented as expected
     actual_content = kwargs['contents']
     self.assertEqual(actual_content.role, 'user')
@@ -105,7 +105,7 @@ class GenerateTextTest(
       ),
   )
   async def test_generate_text_invalid_args(self, kwargs, error_msg):
-    with self.assertRaisesRegex(ValueError, error_msg):
+    with self.assertRaisesRegex(opal_adk_error.OpalAdkError, error_msg):
       await generate_text.generate_text('instructions', **kwargs)
 
   @parameterized.named_parameters(

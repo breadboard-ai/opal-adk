@@ -4,16 +4,16 @@ import logging
 from unittest import mock
 
 from absl import flags as absl_flags
+from absl.testing import absltest
 from googlemaps import exceptions
 from opal_adk import flags
+from opal_adk.error_handling import opal_adk_error
 from opal_adk.tools import map_search_tool
-
-from google3.testing.pybase import googletest
 
 FLAGS = absl_flags.FLAGS
 
 
-class MapSearchToolTest(googletest.TestCase):
+class MapSearchToolTest(absltest.TestCase):
 
   def setUp(self):
     super().setUp()
@@ -107,7 +107,7 @@ class MapSearchToolTest(googletest.TestCase):
   def test_call_no_api_key(self):
     self.mock_flags.return_value = None
     with self.assertRaisesRegex(
-        ValueError, "Google Maps Platform API key is required."
+        opal_adk_error.OpalAdkError, "Google Maps Platform API key is required."
     ):
       self.tool(query="test", context=mock.MagicMock())
 
@@ -128,14 +128,19 @@ class MapSearchToolTest(googletest.TestCase):
 
   def test_call_api_error(self):
     self.mock_client_instance.places.side_effect = exceptions.ApiError("error")
-    res = self.tool(query="test", context=mock.MagicMock())
-    self.assertEqual(res, {})
+    with self.assertRaisesRegex(
+        opal_adk_error.OpalAdkError,
+        "map_search_tool: Error with Google Maps API key.",
+    ):
+      self.tool(query="test", context=mock.MagicMock())
     self.mock_logging.assert_called_once()
 
   def test_call_exception(self):
     self.mock_client_instance.places.side_effect = Exception("error")
-    res = self.tool(query="test", context=mock.MagicMock())
-    self.assertEqual(res, {})
+    with self.assertRaisesRegex(
+        opal_adk_error.OpalAdkError, "maps_search_tool: Internal error."
+    ):
+      self.tool(query="test", context=mock.MagicMock())
     self.mock_logging.assert_called_once()
 
 
@@ -144,4 +149,4 @@ if __name__ == "__main__":
   FLAGS.set_default("opal_adk_gcp_location", "dummy_location")
   FLAGS.set_default("opal_adk_gcp_project_id", "dummy_project")
   FLAGS.set_default("opal_adk_maps_api_key", "dummy_key")
-  googletest.main()
+  absltest.main()

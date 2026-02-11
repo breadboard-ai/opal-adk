@@ -4,11 +4,13 @@ import logging
 from typing import Any
 from google.genai import types
 from opal_adk.clients import vertex_ai_client
+from opal_adk.error_handling import opal_adk_error
 from opal_adk.tools import fetch_url_contents_tool
 from opal_adk.tools import map_search_tool
 from opal_adk.tools import vertex_search_tool
 from opal_adk.types import models
 from opal_adk.types import output_type
+from google.rpc import code_pb2
 
 _GENERATE_TEXT_INSTRUCTIONS = """You are working as part of an AI system, so
 no chit-chat and no explaining what you're doing and why. DO NOT start with 
@@ -72,9 +74,13 @@ async def generate_text(
   try:
     model_enum: models.SimpleModel = models.SimpleModel(model)
   except ValueError:
-    raise ValueError(
-        f"generate_text: Invalid model: {model}. Must be one of"
-        f" {[model.value for model in models.SimpleModel]}"
+    raise opal_adk_error.OpalAdkError(
+        logged=f"generate_text: Invalid model: {model}",
+        status_message=(
+            f"Invalid model: {model}. Must be one of"
+            f" {[model.value for model in models.SimpleModel]}"
+        ),
+        status_code=code_pb2.INVALID_ARGUMENT,
     )
 
   try:
@@ -82,9 +88,13 @@ async def generate_text(
         output_format
     )
   except ValueError:
-    raise ValueError(
-        f"generate_text: Invalid output_format: {output_format}. Must be one of"
-        f" {[type.value for type in output_type.OutputType]}"
+    raise opal_adk_error.OpalAdkError(
+        logged=f"generate_text: Invalid output_format: {output_format}",
+        status_message=(
+            f"Invalid output_format: {output_format}. Must be one of"
+            f" {[type.value for type in output_type.OutputType]}"
+        ),
+        status_code=code_pb2.INVALID_ARGUMENT,
     )
 
   logging.info("generate_text: output_format: %s", output_format_enum)

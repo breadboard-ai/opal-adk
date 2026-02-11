@@ -3,6 +3,8 @@
 from absl import logging
 from google import genai
 from opal_adk import flags
+from opal_adk.error_handling import opal_adk_error
+from google.rpc import code_pb2
 
 
 def create_vertex_ai_client(use_vertex: bool = False) -> genai.Client:
@@ -21,7 +23,7 @@ def create_vertex_ai_client(use_vertex: bool = False) -> genai.Client:
     A genai.Client instance configured for Vertex AI.
 
   Raises:
-    RuntimeError: If the genai.Client cannot be initialized.
+    opal_adk_error.OpalAdkError: If the genai.Client cannot be initialized.
   """
   try:
     vertex_client = genai.Client(
@@ -32,7 +34,12 @@ def create_vertex_ai_client(use_vertex: bool = False) -> genai.Client:
     logging.info("vertex_ai_client: Successfully created Vertex AI client.")
     return vertex_client
   except Exception as e:
-    print(f"vertex_ai_client: Error initializing genai.Client: {e}")
-    raise RuntimeError(
-        "Could not initialize genai.Client. Set GOOGLE_CLOUD_PROJECT/LOCATION"
+    raise opal_adk_error.OpalAdkError(
+        logged=f"vertex_ai_client: Error initializing genai.Client: {e}",
+        status_message=(
+            "Could not initialize genai.Client. Set"
+            " GOOGLE_CLOUD_PROJECT/LOCATION"
+        ),
+        status_code=code_pb2.INTERNAL,
+        details="Set GOOGLE_CLOUD_PROJECT/LOCATION",
     ) from e

@@ -7,6 +7,8 @@ import html2text
 import requests
 from google.adk.tools import base_tool
 from google.adk.tools import tool_context
+from google.rpc import code_pb2
+from opal_adk.error_handling import opal_adk_error
 
 
 def _convert_to_markdown(site_contents: str) -> str:
@@ -69,7 +71,12 @@ class FetchUrlContentsTool(base_tool.BaseTool):
       return _convert_to_markdown(response.text)
     except requests.exceptions.RequestException as e:
       logging.info("fetch_url_contents_tool: failed to fetch url with exception: %s", e)
-      raise e
+      raise opal_adk_error.OpalAdkError(
+          logged=f"fetch_url_contents_tool: failed to fetch url with exception: {e}",
+          status_message="Failed to fetch URL contents",
+          status_code=code_pb2.UNAVAILABLE,
+          details=str(e),
+      ) from e
 
 
 fetch_url = FetchUrlContentsTool()
