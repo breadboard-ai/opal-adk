@@ -33,7 +33,7 @@ class DeepResearchAgentWorkflowTest(unittest.TestCase):
     workflow = deep_research_agent_workflow.deep_research_agent_workflow()
 
     mock_research_agent.assert_called_once_with(
-        model=models.Models.GEMINI_2_5_FLASH
+        model=models.Models.GEMINI_2_5_FLASH, iterations=5
     )
     mock_report_writing_agent.assert_called_once_with(
         model=models.Models.GEMINI_2_5_FLASH,

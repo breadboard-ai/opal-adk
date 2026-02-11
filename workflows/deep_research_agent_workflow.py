@@ -15,12 +15,16 @@ _REPORT_WRITING_AGENT_MODEL = models.Models.GEMINI_2_5_FLASH
 WORKFLOW_NAME = "opal_adk_deep_research_workflow"
 
 
-def deep_research_agent_workflow():
+def deep_research_agent_workflow(num_iterations: int = 5):
   """Creates a sequential agent workflow for deep research and report writing.
 
   This workflow combines a research agent and a report writing agent to first
   perform in-depth research based on a user query and then generate a cited
   research report.
+
+  Args:
+      num_iterations: The number of iterations the research agent should
+        perform.
 
   Returns:
       A `sequential_agent.SequentialAgent` instance configured for deep
@@ -33,7 +37,9 @@ def deep_research_agent_workflow():
           " query and then generates a cited research report."
       ),
       sub_agents=[
-          research_agent.deep_research_agent(model=_RESEARCH_AGENT_MODEL),
+          research_agent.deep_research_agent(
+              model=_RESEARCH_AGENT_MODEL, iterations=num_iterations
+          ),
           report_writing_agent.report_writing_agent(
               model=_REPORT_WRITING_AGENT_MODEL,
               parent_agent_output_key=research_agent.OUTPUT_KEY,

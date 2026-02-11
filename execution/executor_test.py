@@ -37,25 +37,13 @@ class ExecutorTest(parameterized.TestCase, unittest.IsolatedAsyncioTestCase):
     self.mock_runner_cls = self.mock_runner_patcher.start()
     self.addCleanup(self.mock_runner_patcher.stop)
 
-    self.mock_sequential_agent_patcher = mock.patch.object(
-        executor.sequential_agent, 'SequentialAgent', autospec=True
+    self.mock_deep_research_workflow_patcher = mock.patch.object(
+        executor, 'deep_research_agent_workflow', autospec=True
     )
-    self.mock_sequential_agent_cls = self.mock_sequential_agent_patcher.start()
-    self.addCleanup(self.mock_sequential_agent_patcher.stop)
-
-    self.mock_research_agent_patcher = mock.patch.object(
-        executor, 'research_agent', autospec=True
+    self.mock_deep_research_workflow = (
+        self.mock_deep_research_workflow_patcher.start()
     )
-    self.mock_research_agent_mod = self.mock_research_agent_patcher.start()
-    self.addCleanup(self.mock_research_agent_patcher.stop)
-
-    self.mock_report_writing_agent_patcher = mock.patch.object(
-        executor, 'report_writing_agent', autospec=True
-    )
-    self.mock_report_writing_agent_mod = (
-        self.mock_report_writing_agent_patcher.start()
-    )
-    self.addCleanup(self.mock_report_writing_agent_patcher.stop)
+    self.addCleanup(self.mock_deep_research_workflow_patcher.stop)
     self.env_patcher = mock.patch.dict(
         os.environ,
         {
@@ -163,23 +151,17 @@ class ExecutorTest(parameterized.TestCase, unittest.IsolatedAsyncioTestCase):
         user_id, step, execution_inputs={'test_input': input_content}
     )
 
-    self.mock_research_agent_mod.deep_research_agent.assert_called_once_with(
-        iterations=3
+    self.mock_deep_research_workflow.deep_research_agent_workflow.assert_called_once_with(
+        num_iterations=3
     )
-    self.mock_report_writing_agent_mod.report_writing_agent.assert_called_once()
-
-    self.mock_sequential_agent_cls.assert_called_once()
-    call_args = self.mock_sequential_agent_cls.call_args
-    self.assertEqual(call_args.kwargs['name'], 'deep_research_agent')
-    self.assertEqual(len(call_args.kwargs['sub_agents']), 2)
 
     self.executor.session_service.create_session.assert_called_once_with(
-        app_name='test_step', user_id='test_user'
+        app_name='test_step', user_id='test_user', session_id=None
     )
 
     self.mock_runner_cls.assert_called_once_with(
         app_name='test_step',
-        agent=self.mock_sequential_agent_cls.return_value,
+        agent=self.mock_deep_research_workflow.deep_research_agent_workflow.return_value,
         session_service=self.executor.session_service,
         memory_service=self.executor.memory_service,
     )

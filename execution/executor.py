@@ -5,21 +5,19 @@ import os
 from absl import logging
 from google.adk import runners
 from google.adk.agents import loop_agent
-from google.adk.agents import sequential_agent
 from google.adk.events import event
 from google.adk.memory import in_memory_memory_service
 from google.adk.sessions import in_memory_session_service
 from google.genai import types
 from opal_adk import flags
 from opal_adk.agents import node_agent
-from opal_adk.agents import report_writing_agent
-from opal_adk.agents import research_agent
 from opal_adk.data_model import agent_step
 from opal_adk.data_model import opal_plan_step
 from opal_adk.types import ui_type
+from opal_adk.workflows import deep_research_agent_workflow
 
 _PARAMETER_KEY = "query"
-_MAX_ITERATIONS = 10
+_MAX_ITERATIONS = 20
 
 
 def _create_content_from_string(content: str) -> types.Content:
@@ -177,12 +175,14 @@ class AgentExecutor:
       )
 
     # Create a new session if a session with this id doesn't yet exist.
-    if not await self.session_service.get_session(
+    if not session_id or not await self.session_service.get_session(
         app_name=step.step_name, user_id=user_id, session_id=session_id
     ):
-      await self.session_service.create_session(
-          app_name=step.step_name, user_id=user_id, session_id=session_id
-      )
+      session_id = (
+          await self.session_service.create_session(
+              app_name=step.step_name, user_id=user_id, session_id=session_id
+          )
+      ).id
 
     runner = runners.Runner(
         app_name=step.step_name,
@@ -227,41 +227,22 @@ class AgentExecutor:
       Chunks of the agent's output as the execution progresses, typically
       including research findings and report sections.
     """
-    deep_research_agent = sequential_agent.SequentialAgent(
-        name="deep_research_agent",
-        description=(
-            "Performs deep research based on a query and generates an"
-            " output report on its findings."
-        ),
-        sub_agents=[
-            research_agent.deep_research_agent(iterations=opal_step.iterations),
-            report_writing_agent.report_writing_agent(
-                parent_agent_output_key=research_agent.OUTPUT_KEY
-            ),
-        ],
+    deep_research_agent = (
+        deep_research_agent_workflow.deep_research_agent_workflow(
+            num_iterations=opal_step.iterations
+        )
     )
-    if session_id:
-      # Create a new session if a session with this id doesn't yet exist.
-      if not await self.session_service.get_session(
-          app_name=opal_step.step_name,
-          user_id=user_id,
-          session_id=session_id,
-      ):
-        session = await self.session_service.create_session(
-            app_name=opal_step.step_name,
-            user_id=user_id,
-            session_id=session_id,
-        )
-      else:
-        session = await self.session_service.get_session(
-            app_name=opal_step.step_name,
-            user_id=user_id,
-            session_id=session_id,
-        )
-    else:
-      session = await self.session_service.create_session(
-          app_name=opal_step.step_name, user_id=user_id
-      )
+    # Create a new session if a session with this id doesn't yet exist.
+    if not session_id or not await self.session_service.get_session(
+        app_name=opal_step.step_name, user_id=user_id, session_id=session_id
+    ):
+      session_id = (
+          await self.session_service.create_session(
+              app_name=opal_step.step_name,
+              user_id=user_id,
+              session_id=session_id,
+          )
+      ).id
     runner = runners.Runner(
         app_name=opal_step.step_name,
         agent=deep_research_agent,
@@ -277,9 +258,8 @@ class AgentExecutor:
       )
 
     research_query = execution_inputs[input_param]
-    assert session is not None
     return runner.run_async(
         user_id=user_id,
-        session_id=session.id,
+        session_id=session_id,
         new_message=research_query,
     )
