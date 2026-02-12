@@ -6,7 +6,6 @@ from google.adk.planners import built_in_planner
 from opal_adk.agents import node_agent
 from opal_adk.types import models
 from opal_adk.types import ui_type as opal_adk_ui_types
-from opal_adk.util import tool_utils
 
 from google3.testing.pybase import googletest
 
@@ -15,9 +14,9 @@ class NodeAgentTest(parameterized.TestCase):
 
   def setUp(self):
     super().setUp()
-    self.mock_get_tools = mock.patch.object(tool_utils, "get_tools").start()
+    self.mock_get_tools = mock.patch.object(node_agent, "_get_tools").start()
     self.mock_get_tools_for_ui_type = mock.patch.object(
-        tool_utils, "get_tools_for_ui_type"
+        node_agent, "_get_tools_for_ui_type"
     ).start()
     self.mock_llm_agent_cls = mock.patch.object(llm_agent, "LlmAgent").start()
     self.mock_planner_cls = mock.patch.object(
