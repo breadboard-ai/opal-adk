@@ -4,6 +4,7 @@ from collections.abc import Callable
 from typing import Any, List, Tuple
 from opal_adk.tools.chat import chat_request_user_input
 from opal_adk.tools.chat import instructions as chat_instructions
+from opal_adk.tools.generate import generate_speech_from_text
 from opal_adk.tools.generate import generate_text
 from opal_adk.tools.generate import instructions as generate_instructions
 from opal_adk.tools.system import instructions as system_instructions
@@ -33,7 +34,10 @@ def get_tools() -> List[Tuple[str, List[Callable[..., Any]]]]:
       ),
       (
           generate_instructions.GENERATE_INSTRUCTIONS,
-          [generate_text.generate_text],
+          [
+              generate_text.generate_text,
+              generate_speech_from_text.generate_speech_from_text,
+          ],
       ),
   ]
 

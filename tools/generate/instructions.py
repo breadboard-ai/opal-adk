@@ -20,4 +20,5 @@ yourself. You are an LLM and you can do it without calling
 "{GENERATE_TEXT_FUNCTION}".
 - For longer responses like generating a chapter of a book or analyzing a 
 large and complex set of files, use "{GENERATE_TEXT_FUNCTION}".
+
 """
