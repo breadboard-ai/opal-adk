@@ -2,6 +2,9 @@
 
 import logging
 from google.genai import types
+from opal_adk.infra import environment_util
+from opal_adk.error_handling import opal_adk_error
+from google.rpc import code_pb2
 
 Part = types.Part
 
@@ -43,3 +46,22 @@ def extract_grounding_metadata(
         )
     )
   return result
+
+
+def validate_candidate_recitation(
+    response: types.GenerateContentResponse,
+) -> None:
+  """Checks if the candidate recitation is enabled."""
+  for candidate in response.candidates:
+    environment_util.log_if_not_staging(
+        'Candidate finish reason: %s', candidate.finish_reason
+    )
+    if candidate.finish_reason == types.FinishReason.RECITATION:
+      raise opal_adk_error.OpalAdkError(
+          status_message=(
+              'Recitation is found for the candidate. This may indicate a'
+              ' policy violation in the generated text.'
+          ),
+          status_code=code_pb2.INTERNAL,
+          details='Content blocked for recitation.',
+      )
