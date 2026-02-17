@@ -53,7 +53,9 @@ class GeminiGenerateImageTest(absltest.TestCase):
 
     mock_client.models.generate_content.assert_called_once()
     _, kwargs = mock_client.models.generate_content.call_args
-    self.assertEqual(kwargs['model'], models.Models.GEMINI_2_5_IMAGE.value)
+    self.assertEqual(
+        kwargs['model'], models.Models.GEMINI_2_5_FLASH_IMAGE.value
+    )
     self.assertEqual(kwargs['contents'].parts[0].text, 'A test image')
     self.assertEqual(kwargs['contents'].role, 'user')
     config = kwargs['config']
@@ -92,9 +94,7 @@ class GeminiGenerateImageTest(absltest.TestCase):
     mock_client.models.generate_content.side_effect = Exception('API failed')
 
     parts = [types.Part(text='A test image')]
-    with self.assertRaisesRegex(
-        opal_adk_error.OpalAdkError, 'API failed'
-    ):
+    with self.assertRaisesRegex(opal_adk_error.OpalAdkError, 'API failed'):
       gemini_generate_image.gemini_generate_images(parts)
 
   @mock.patch.object(
@@ -125,7 +125,6 @@ class GeminiGenerateImageTest(absltest.TestCase):
         opal_adk_error.OpalAdkError, 'No images generated.'
     ):
       gemini_generate_image.gemini_generate_images(parts)
-
 
   @mock.patch.object(
       gemini_generate_image.vertex_ai_client,
@@ -189,7 +188,7 @@ if __name__ == '__main__':
     
     images = gemini_generate_image.gemini_generate_images(
         parts,
-        aspect_ratio=image_types.AspectRatio.RATIO_4_3,
+        aspect_ratio=image_types.AspectRatio.RATIO_4_3.value,
         model_name='custom_model',
         safety_settings=safety_settings,
     )

@@ -8,6 +8,7 @@ from google.adk.planners import built_in_planner
 from google.genai import types
 from opal_adk.tools.chat import chat_request_user_input
 from opal_adk.tools.chat import instructions as chat_instructions
+from opal_adk.tools.generate import generate_images
 from opal_adk.tools.generate import generate_speech_from_text
 from opal_adk.tools.generate import generate_text
 from opal_adk.tools.generate import instructions as generate_instructions
@@ -74,6 +75,7 @@ def _get_tools() -> List[Tuple[str, List[Callable[..., Any]]]]:
           [
               generate_text.generate_text,
               generate_speech_from_text.generate_speech_from_text,
+              generate_images.generate_images
           ],
       ),
   ]

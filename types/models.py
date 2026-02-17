@@ -27,7 +27,8 @@ class Models(enum.Enum):
   IMAGEN_3 = "imagen-3.0-generate-002"
   IMAGEN_3_FAST = "imagen-3.0-fast-generate-001"
   GEMINI_IMAGE = "gemini-2.0-flash-preview-image-generation"
-  GEMINI_2_5_IMAGE = "gemini-2.5-flash-image-preview"
+  GEMINI_2_5_FLASH_IMAGE = "gemini-2.5-flash-image"
+  GEMINI_3_PRO_IMAGE = "gemini-3-pro-image-opal"
   VEO_2 = "veo-2.0-generate-001"
   VEO_3_FAST = "veo-3.0-fast-generate-preview"
   VEO_3 = "veo-3.0-generate-preview"
@@ -51,3 +52,20 @@ def simple_model_to_model(simple_model: SimpleModel) -> Models:
       return Models.LITE_MODEL_NAME
     case SimpleModel.FLASH:
       return Models.FLASH_MODEL_NAME
+
+
+def simple_model_to_image_model(simple_model: SimpleModel) -> Models:
+  """Converts a SimpleModel enum to its corresponding Models enum for generating images.
+
+  Args:
+    simple_model: The SimpleModel to convert.
+
+  Returns:
+    The corresponding image generation Models enum value.
+  """
+  match simple_model:
+    case SimpleModel.PRO:
+      return Models.GEMINI_3_PRO_IMAGE
+    case _:
+      return Models.GEMINI_2_5_FLASH_IMAGE
+

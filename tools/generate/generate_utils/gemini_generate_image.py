@@ -37,7 +37,7 @@ def gemini_generate_images(
   logging.info('Gemini image out request parts count: %d', len(parts))
 
   if model_name is None:
-    model_name = models.Models.GEMINI_2_5_IMAGE.value
+    model_name = models.Models.GEMINI_2_5_FLASH_IMAGE.value
 
   config = types.GenerateContentConfig(
       response_modalities=['TEXT', 'IMAGE'],
