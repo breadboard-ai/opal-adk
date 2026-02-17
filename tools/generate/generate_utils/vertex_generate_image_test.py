@@ -1,8 +1,8 @@
 from unittest import mock
 
 from absl.testing import absltest
-from opal_adk.util import gemini_utils
 from opal_adk.tools.generate.generate_utils import vertex_generate_image
+from opal_adk.util import gemini_utils
 
 
 class GenerateImageViaGenaiApiTest(absltest.TestCase):

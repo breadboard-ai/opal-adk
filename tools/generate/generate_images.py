@@ -1,10 +1,17 @@
 """Module for generating images using Gemini models with consistency constraints."""
 
+from typing import Any
+from google.adk.tools import tool_context as tc
 from google.genai import types
+from opal_adk.error_handling import opal_adk_error
 from opal_adk.tools.generate.generate_utils import gemini_generate_image
 from opal_adk.types import image_types
 from opal_adk.types import models
+from google.rpc import code_pb2
 
+ToolContext = tc.ToolContext
+
+_INPUT_IMAGE_KEY = 'input_image'
 _AI_IMAGE_TOOL_PREFIX = """Generate the image(s) below with consistent style (and characters as applicable).
 
 🚨 CRITICAL: If the request asks for MULTIPLE images (e.g., "generate 3 images", "create 5 different scenes"), 
@@ -21,9 +28,12 @@ Pay careful attention to the exact number of images requested and ensure you gen
 """
 
 
-def generate_images(
-    prompt: str, model: str, images: list[types.Content], aspect_ratio: str
-) -> list[types.Content]:
+async def generate_images(
+    prompt: str,
+    model: str,
+    aspect_ratio: str,
+    tool_context: ToolContext,
+) -> dict[str, Any]:
   """Generates one or more images based on a prompt and optionally.
 
   Args:
@@ -52,22 +62,33 @@ def generate_images(
       is designed for professional asset production and complex instructions -
       choose "flash" for speed and efficiency. This model is optimized for
       high-volume, low-latency tasks.
-    images: A list of input images, specified as genai.types.Content.
     aspect_ratio: The aspect ratio of the generated images. Supported values are
       ["1:1", "3:4", "4:3", "9:16", "16:9"].
+    tool_context: ToolContext passed as part of the ADK tool execution. This
+      will contain any images that were added by the user as a reference.
 
   Returns:
-    A list of generated images.
+    A dict containing the status, message and dictionary of image metadata.
   """
-  simple_model = models.SimpleModel(model)
+  try:
+    simple_model = models.SimpleModel(model)
+  except ValueError:
+    raise opal_adk_error.OpalAdkError(
+        status_code=code_pb2.INVALID_ARGUMENT,
+        status_message=(
+            f'generate_imagesInvalid model name: {model}, expected one of'
+            ' ["pro", "flash"]'
+        ),
+    )
+
   model_name = models.simple_model_to_image_model(simple_model).value
 
   parsed_aspect_ratio = image_types.AspectRatio(aspect_ratio)
 
   all_parts = [types.Part.from_text(text=_AI_IMAGE_TOOL_PREFIX + prompt)]
-  for content in images:
-    if content.parts:
-      all_parts.extend(content.parts)
+  input_images = await tool_context.load_artifact(_INPUT_IMAGE_KEY)
+  if input_images:
+    all_parts.append(input_images)
 
   generated_images = gemini_generate_image.gemini_generate_images(
       parts=all_parts,
@@ -75,12 +96,21 @@ def generate_images(
       model_name=model_name,
   )
 
-  results = []
-  for image_bytes, mime_type in generated_images:
-    results.append(
-        types.Content(
-            parts=[types.Part.from_bytes(data=image_bytes, mime_type=mime_type)]
-        )
+  metadata = {}
+  for i, (image_bytes, mime_type) in enumerate(generated_images):
+    image = types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
+    image_name = 'output_image_' + str(i)
+    tool_context.save_artifact(filename=image_name, artifact=image)
+    metadata['image_name'] = image_name
+    metadata['mime_type'] = mime_type
+    tool_context.state['image_generated'] = (
+        'Successfully generated and stored an image with image_name:'
+        f' {image_name} and mime_type: {mime_type}.  The prompt used '
+        f'for image generation was: {prompt}'
     )
 
-  return results
+  return {
+      'status': 'success',
+      'message': 'Successfully generated images',
+      'metadata': metadata,
+  }

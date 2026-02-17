@@ -6,7 +6,7 @@ from google.adk.tools import tool_context as tc
 
 def objective_fulfilled(
     tool_context: tc.ToolContext,
-    response: str,
+    objective_outcome: str,
 ) -> dict[str, str]:
   """Indicates completion of the overall objective.
 
@@ -15,7 +15,7 @@ def objective_fulfilled(
   Args:
     tool_context: The context object containing information about the current
       tool execution.
-    response: The final result to pass back to the user.
+    objective_outcome: The final result to pass back to the user.
 
   Returns:
     A dictionary indicating the status of the operation.
@@ -23,4 +23,4 @@ def objective_fulfilled(
   tool_context.actions.escalate = True
   tool_context.actions.skip_summarization = True
   logging.info("SUCCESS! Objective fulfilled")
-  return {"status": "success", "response": response}
+  return {"status": "success", "objective_outcome": objective_outcome}

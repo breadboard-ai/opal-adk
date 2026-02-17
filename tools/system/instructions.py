@@ -50,7 +50,7 @@ Only after you've completely fulfilled the objective call the "{OBJECTIVE_FULFIL
 
 NOTE ON WHAT TO RETURN: 
 
-1. Return outcome as a text content that can reference VFS files. They will be included as part of the outcome. For example, if you need to return multiple existing images or videos, just reference them using <file> tags in the "objective_outcome" parameter.
+1. Return outcome as a text content that can reference files. They will be included as part of the outcome. For example, if you need to return multiple existing images or videos, these will have been stored as artifacts and their names and types are available in the session state. These names and types should be added in the "objective_outcome" parameter passed to objective_fulfilled.
 
 2. Only return what is asked for in the objective. DO NOT return any extraneous commentary or intermediate outcomes. For instance, when asked to evaluate multiple products for product market fit and return the verdict on which fits the best, you must only return the verdict and skip the rest of intermediate information you might have produced as a result of evaluation. As another example, when asked to generate an image, just return a VFS file reference to the image without any extraneous text.
 

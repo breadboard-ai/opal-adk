@@ -34,10 +34,11 @@ def gemini_generate_images(
     opal_adk_error.OpalAdkError: If unable to generate image.
   """
   llm_logging.log_operation_start('Generate Image (Gemini)')
-  logging.info('Gemini image out request parts count: %d', len(parts))
-
   if model_name is None:
     model_name = models.Models.GEMINI_2_5_FLASH_IMAGE.value
+  logging.info(
+      'gemini_generate_image: calling generate image with model: %s', model_name
+  )
 
   config = types.GenerateContentConfig(
       response_modalities=['TEXT', 'IMAGE'],
@@ -54,6 +55,7 @@ def gemini_generate_images(
         'gemini_generate_image: Generating image with config %s',
         config,
     )
+    logging.info("gemini_generate_image: Calling generate image with: %s", parts)
     response = client.models.generate_content(
         model=model_name,
         contents=types.Content(parts=parts, role='user'),
@@ -71,6 +73,7 @@ def gemini_generate_images(
         status_code=code_pb2.INTERNAL,
     )
 
+  logging.info('gemini_generate_image: Returned images: %s', response)
   content = response.candidates[0].content
   if not content or not content.parts:
     llm_logging.log_operation_end('Generate Image (Gemini)', success=False)

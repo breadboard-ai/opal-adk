@@ -3,8 +3,11 @@
 from collections.abc import AsyncGenerator, Mapping
 import os
 from absl import logging
+from typing import Any
 from google.adk import runners
 from google.adk.agents import loop_agent
+from google.adk.artifacts import base_artifact_service
+from google.adk.artifacts import in_memory_artifact_service
 from google.adk.events import event
 from google.adk.memory import in_memory_memory_service
 from google.adk.sessions import in_memory_session_service
@@ -13,8 +16,10 @@ from opal_adk import flags
 from opal_adk.agents import node_agent
 from opal_adk.data_model import agent_step
 from opal_adk.data_model import opal_plan_step
+from opal_adk.error_handling import opal_adk_error
 from opal_adk.types import ui_type
 from opal_adk.workflows import deep_research_agent_workflow
+from google.rpc import code_pb2
 
 _PARAMETER_KEY = "query"
 _MAX_ITERATIONS = 20
@@ -43,6 +48,52 @@ def _extract_input_parameter(plan_step: opal_plan_step.OpalPlanStep) -> str:
         f"one input parameter, but got {len(input_params)}: {input_params}"
     )
   return input_params[0]
+
+
+async def _populate_session_artifacts(
+    *,
+    app: str,
+    user_id: str,
+    artifact_service: base_artifact_service.BaseArtifactService,
+    execution_inputs: Mapping[str, types.Content],
+    session: Any,
+) -> None:
+  """Populates session artifacts from execution inputs.
+
+  Args:
+    app: The application name.
+    user_id: The user ID.
+    artifact_service: The service used to manage artifacts.
+    execution_inputs: A mapping of parameter names to their content.
+    session: The session created for this agent.
+
+  Raises:
+    opal_adk_error.OpalAdkError: If a specified input parameter is not found in
+      the execution inputs.
+  """
+
+  for content_name, content in execution_inputs.items():
+    if not content.parts:
+      raise opal_adk_error.OpalAdkError(
+          logged=(
+              f"Executor.py: Input parameter '{content_name}' has no content in"
+              f" execution inputs: {execution_inputs}."
+          ),
+          status_code=code_pb2.INVALID_ARGUMENT,
+          status_message=(
+              f"Input parameter '{content_name}' has no content in execution"
+              f" inputs: {execution_inputs}."
+          ),
+      )
+    await artifact_service.save_artifact(
+        app_name=app,
+        user_id=user_id,
+        filename=content_name,
+        artifact=content.parts[0],
+        session_id=session.id,
+    )
+    session.state["saved_file_to_artifact_service"] = content_name
+    session.state["artifact_provided_by"] = "user"
 
 
 class AgentExecutor:
@@ -174,26 +225,35 @@ class AgentExecutor:
           "Executor: session_id must be provided for chat UI type."
       )
 
-    # Create a new session if a session with this id doesn't yet exist.
-    if not session_id or not await self.session_service.get_session(
+    session = await self.session_service.get_session(
         app_name=step.step_name, user_id=user_id, session_id=session_id
-    ):
-      session_id = (
-          await self.session_service.create_session(
-              app_name=step.step_name, user_id=user_id, session_id=session_id
-          )
-      ).id
+    )
+    # Create a new session if a session with this id doesn't yet exist.
+    if not session_id or not session:
+      session = await self.session_service.create_session(
+          app_name=step.step_name, user_id=user_id, session_id=session_id
+      )
 
+    artifact_service = in_memory_artifact_service.InMemoryArtifactService()
+    if execution_inputs:
+      await _populate_session_artifacts(
+          app=step.step_name,
+          user_id=user_id,
+          artifact_service=artifact_service,
+          execution_inputs=execution_inputs,
+          session=session
+      )
     runner = runners.Runner(
         app_name=step.step_name,
         agent=orchestrator_agent,
         session_service=self.session_service,
         memory_service=self.memory_service,
+        artifact_service=artifact_service,
     )
 
     return runner.run_async(
         user_id=user_id,
-        session_id=session_id,
+        session_id=session.id,
         new_message=step.objective,
         invocation_id=step.invocation_id,
     )

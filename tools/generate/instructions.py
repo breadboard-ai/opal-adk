@@ -21,4 +21,11 @@ yourself. You are an LLM and you can do it without calling
 - For longer responses like generating a chapter of a book or analyzing a 
 large and complex set of files, use "{GENERATE_TEXT_FUNCTION}".
 
+
+## Where to find files provided by the user:
+
+The user may have provided reference files, such as images or videos, as part
+of their request. These files that were directly provided by the user will be
+stored in the artifact service. You can tell if files were added by inspecting
+the session state.
 """
