@@ -226,7 +226,7 @@ class AgentExecutor:
       )
 
     session = await self.session_service.get_session(
-        app_name=step.step_name, user_id=user_id, session_id=session_id
+        app_name=step.step_name, user_id=user_id, session_id=session_id  # pyrefly: ignore[bad-argument-type]
     )
     # Create a new session if a session with this id doesn't yet exist.
     if not session_id or not session:

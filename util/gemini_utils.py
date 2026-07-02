@@ -14,7 +14,7 @@ def extract_grounding_metadata(
 ) -> list[types.Content]:
   """Extracts grounding metadata from Vertex AI generate_content response."""
   result = []
-  candidate = response.candidates[0]
+  candidate = response.candidates[0]  # pyrefly: ignore[unsupported-operation]
   if not candidate.grounding_metadata:
     return result
   logging.info('Grounding metadata: %s', candidate.grounding_metadata)
@@ -52,7 +52,7 @@ def validate_candidate_recitation(
     response: types.GenerateContentResponse,
 ) -> None:
   """Checks if the candidate recitation is enabled."""
-  for candidate in response.candidates:
+  for candidate in response.candidates:  # pyrefly: ignore[not-iterable]
     environment_util.log_if_not_staging(
         'Candidate finish reason: %s', candidate.finish_reason
     )

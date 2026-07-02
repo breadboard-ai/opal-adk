@@ -105,7 +105,7 @@ class MapSearchTool(base_tool.BaseTool):
     gmaps = googlemaps.Client(key=api_key)
 
     try:
-      results = gmaps.places(query=query)
+      results = gmaps.places(query=query)  # pyrefly: ignore[missing-attribute]
       return {"result": _format_results(query, results)}
     except exceptions.ApiError as e:
       logging.exception("Google Maps API Error: %s", e)

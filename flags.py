@@ -57,30 +57,30 @@ _OPAL_ADK_ENVIRONMENT = flags.DEFINE_string(
 
 def get_service_account() -> ServiceAccount:
   try:
-    return ServiceAccount(_OPAL_ADK_GCP_SERVICE_ACCOUNT.value)
+    return ServiceAccount(_OPAL_ADK_GCP_SERVICE_ACCOUNT.value)  # pyrefly: ignore[bad-argument-type]
   except flags.UnparsedFlagAccessError:
-    return ServiceAccount(_OPAL_ADK_GCP_SERVICE_ACCOUNT.default)
+    return ServiceAccount(_OPAL_ADK_GCP_SERVICE_ACCOUNT.default)  # pyrefly: ignore[bad-argument-type]
 
 
 def get_location() -> Location:
   try:
-    return Location(_OPAL_ADK_GCP_LOCATION.value)
+    return Location(_OPAL_ADK_GCP_LOCATION.value)  # pyrefly: ignore[bad-argument-type]
   except flags.UnparsedFlagAccessError:
-    return Location(_OPAL_ADK_GCP_LOCATION.default)
+    return Location(_OPAL_ADK_GCP_LOCATION.default)  # pyrefly: ignore[bad-argument-type]
 
 
 def get_project_id() -> ProjectId:
   try:
-    return ProjectId(_OPAL_ADK_GCP_PROJECT_ID.value)
+    return ProjectId(_OPAL_ADK_GCP_PROJECT_ID.value)  # pyrefly: ignore[bad-argument-type]
   except flags.UnparsedFlagAccessError:
-    return ProjectId(_OPAL_ADK_GCP_PROJECT_ID.default)
+    return ProjectId(_OPAL_ADK_GCP_PROJECT_ID.default)  # pyrefly: ignore[bad-argument-type]
 
 
 def get_maps_api_key() -> MapsAPIKey:
   try:
-    return MapsAPIKey(_OPAL_ADK_MAPS_API_KEY.value)
+    return MapsAPIKey(_OPAL_ADK_MAPS_API_KEY.value)  # pyrefly: ignore[bad-argument-type]
   except flags.UnparsedFlagAccessError:
-    return MapsAPIKey(_OPAL_ADK_MAPS_API_KEY.default)
+    return MapsAPIKey(_OPAL_ADK_MAPS_API_KEY.default)  # pyrefly: ignore[bad-argument-type]
 
 
 def get_debug_logging() -> bool:

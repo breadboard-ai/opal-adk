@@ -253,7 +253,7 @@ class ExecutorTest(parameterized.TestCase, unittest.IsolatedAsyncioTestCase):
         app_name='test_app',
         user_id='test_user',
         filename='param1',
-        artifact=content.parts[0],
+        artifact=content.parts[0],  # pyrefly: ignore[unsupported-operation]
         session_id='session_123',
     )
     self.assertEqual(
@@ -353,7 +353,7 @@ class ExecutorTest(parameterized.TestCase, unittest.IsolatedAsyncioTestCase):
         app_name='test_step',
         user_id='test_user',
         filename='param1',
-        artifact=input_content.parts[0],
+        artifact=input_content.parts[0],  # pyrefly: ignore[unsupported-operation]
         session_id='session_123',
     )
 

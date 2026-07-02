@@ -10,13 +10,13 @@ class AgentStepTest(absltest.TestCase):
   def test_render(self):
     step = agent_step.AgentStep(
         step_name='step1',
-        objective='objective1',
+        objective='objective1',  # pyrefly: ignore[bad-argument-type]
         invocation_id='inv1',
         input_parameters=['param1'],
         output='output1',
         reasoning='reasoning1',
         ui_type=ut.UIType.CHAT,
-        ui_prompt='ui_prompt1',
+        ui_prompt='ui_prompt1',  # pyrefly: ignore[bad-argument-type]
         is_list_output=True,
         system_prompt='sys_prompt1',
     )
@@ -40,8 +40,8 @@ class AgentStepTest(absltest.TestCase):
   def test_render_no_system_prompt(self):
     step = agent_step.AgentStep(
         step_name='step1',
-        objective='objective1',
-        ui_prompt='prompt',
+        objective='objective1',  # pyrefly: ignore[bad-argument-type]
+        ui_prompt='prompt',  # pyrefly: ignore[bad-argument-type]
     )
     # Check that system prompt is empty tag by default
     self.assertIn('<system_prompt></system_prompt>', step.render())
@@ -49,9 +49,9 @@ class AgentStepTest(absltest.TestCase):
   def test_render_as_input_parameter(self):
     step = agent_step.AgentStep(
         step_name='step1',
-        objective='objective1',
+        objective='objective1',  # pyrefly: ignore[bad-argument-type]
         ui_type=ut.UIType.CHAT,
-        ui_prompt='prompt',
+        ui_prompt='prompt',  # pyrefly: ignore[bad-argument-type]
     )
     expected_output = """<application_input>
       <field_name>step1</field_name>

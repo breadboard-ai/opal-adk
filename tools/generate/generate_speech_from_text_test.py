@@ -39,9 +39,9 @@ class GenerateSpeechFromTextTest(parameterized.TestCase):
     self.assertLen(result, 2)
     self.assertIsInstance(result[0], types.Content)
     self.assertIsInstance(result[1], types.Content)
-    self.assertEqual(result[0].parts[0].inline_data.data, b'audio_bytes')
-    self.assertEqual(result[0].parts[0].inline_data.mime_type, 'audio/wav')
-    self.assertEqual(result[1].parts[0].inline_data.data, b'audio_bytes')
+    self.assertEqual(result[0].parts[0].inline_data.data, b'audio_bytes')  # pyrefly: ignore[missing-attribute, unsupported-operation]
+    self.assertEqual(result[0].parts[0].inline_data.mime_type, 'audio/wav')  # pyrefly: ignore[missing-attribute, unsupported-operation]
+    self.assertEqual(result[1].parts[0].inline_data.data, b'audio_bytes')  # pyrefly: ignore[missing-attribute, unsupported-operation]
 
     self.assertEqual(mock_generate_audio.call_count, 2)
     mock_generate_audio.assert_any_call('Hello', expected_voice_name)

@@ -85,7 +85,7 @@ def deep_research_agent(
   ]
 
   if additional_tools:
-    all_research_tools.extend(additional_tools)
+    all_research_tools.extend(additional_tools)  # pyrefly: ignore[bad-argument-type]
 
   agent_instructions = research_system_instructions(is_first_iteration)
   if parent_agent_output_key:

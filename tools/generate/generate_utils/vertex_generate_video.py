@@ -173,7 +173,7 @@ def _generate_video_impl(
         status_code=code_pb2.INTERNAL,
     )
   else:
-    return res.video_bytes, res.mime_type
+    return res.video_bytes, res.mime_type  # pyrefly: ignore[bad-return]
 
 
 def generate_video_via_vertex_ai(

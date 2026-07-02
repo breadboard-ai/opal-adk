@@ -90,7 +90,7 @@ def generate_image_via_genai_api(
       )
       if images:
         logging.info('Generate Image (Imagen) completed successfully.')
-        return _image_bytes_from_generated_image(images[0])
+        return _image_bytes_from_generated_image(images[0])  # pyrefly: ignore[bad-index]
     except RETRIABLE_RESPONSE_ERRORS as e:
       last_exception = e
       logging.warning(

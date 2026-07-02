@@ -72,7 +72,7 @@ class OpalAdkApi:
     agent_generator = await self.executor.execute_deep_research_agent(
         user_id=request.user_id,
         opal_step=opal_step,
-        execution_inputs={"query": request.query},
+        execution_inputs={"query": request.query},  # pyrefly: ignore[bad-argument-type]
     )
     if agent_generator is not None:
       async for event in agent_generator:
