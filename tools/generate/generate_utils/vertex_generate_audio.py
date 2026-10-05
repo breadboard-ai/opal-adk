@@ -62,7 +62,7 @@ def generate_audio(
           details='generate_audio: TTS model returned no audio data.',
       )
 
-    pcm_data = response.candidates[0].content.parts[0].inline_data.data  # pytype: disable=attribute-error
+    pcm_data = response.candidates[0].content.parts[0].inline_data.data  # pyrefly: ignore[missing-attribute]
 
     wav_buffer = io.BytesIO()
     with wave.open(wav_buffer, 'wb') as wf:
