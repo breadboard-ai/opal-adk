@@ -10,6 +10,8 @@ from google.adk.tools import tool_context
 from google.rpc import code_pb2
 from opal_adk.error_handling import opal_adk_error
 
+_GENERIC_FETCH_ERROR_DETAILS = "The requested URL could not be fetched."
+
 
 def _convert_to_markdown(site_contents: str) -> str:
   """Fetches the contents of a URL and returns them as markdown.
@@ -63,19 +65,27 @@ class FetchUrlContentsTool(base_tool.BaseTool):
       The contents of the URL as a string.
 
     Raises:
-      requests.exceptions.RequestException: If the URL cannot be fetched.
+      opal_adk_error.OpalAdkError: If the URL cannot be fetched.
     """
     try:
       response = requests.get(url)
       response.raise_for_status()
       return _convert_to_markdown(response.text)
     except requests.exceptions.RequestException as e:
-      logging.info("fetch_url_contents_tool: failed to fetch url with exception: %s", e)
+      logging.warning(
+          "fetch_url_contents_tool: failed to fetch url with exception: %s", e
+      )
       raise opal_adk_error.OpalAdkError(
-          logged=f"fetch_url_contents_tool: failed to fetch url with exception: {e}",
+          logged=(
+              f"fetch_url_contents_tool: failed to fetch url with exception:"
+              f" {e}"
+          ),
           status_message="Failed to fetch URL contents",
           status_code=code_pb2.UNAVAILABLE,
-          details=str(e),
+          # Avoid exposing raw requests/urllib3 exception text in user-facing
+          # details, as it can disclose internal host, port, and connection
+          # state. The full exception is preserved in server logs and `logged`.
+          details=_GENERIC_FETCH_ERROR_DETAILS,
       ) from e
 
 
