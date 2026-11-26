@@ -289,7 +289,7 @@ class AgentExecutor:
     """
     deep_research_agent = (
         deep_research_agent_workflow.deep_research_agent_workflow(
-            num_iterations=opal_step.iterations
+            num_iterations=min(opal_step.iterations, _MAX_ITERATIONS)
         )
     )
     # Create a new session if a session with this id doesn't yet exist.

@@ -190,6 +190,34 @@ class ExecutorTest(parameterized.TestCase, unittest.IsolatedAsyncioTestCase):
 
     self.assertEqual(result, 'async_generator_result')
 
+  async def test_execute_deep_research_agent_clamps_iterations(self):
+    step = opal_plan_step.OpalPlanStep(
+        step_name='test_step',
+        step_intent='do research',
+        model_api='gemini',
+        iterations=1_000_000,
+        input_parameters=['test_input'],
+    )
+    mock_session = mock.AsyncMock()
+    mock_session.id = 'session_123'
+    self.executor.session_service.get_session = mock.AsyncMock(
+        return_value=None
+    )
+    self.executor.session_service.create_session = mock.AsyncMock(
+        return_value=mock_session
+    )
+    input_content = types.Content(
+        role='user', parts=[types.Part(text='do research')]
+    )
+
+    await self.executor.execute_deep_research_agent(
+        'test_user', step, execution_inputs={'test_input': input_content}
+    )
+
+    self.mock_deep_research_workflow.deep_research_agent_workflow.assert_called_once_with(
+        num_iterations=executor._MAX_ITERATIONS
+    )
+
   async def test_execute_deep_research_agent_with_session_id(self):
     user_id = 'test_user'
     step = opal_plan_step.OpalPlanStep(

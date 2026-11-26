@@ -11,6 +11,7 @@ from google.rpc import code_pb2
 from opal_adk.error_handling import opal_adk_error
 
 _GENERIC_FETCH_ERROR_DETAILS = "The requested URL could not be fetched."
+_REQUEST_TIMEOUT_SECONDS = 10
 
 
 def _convert_to_markdown(site_contents: str) -> str:
@@ -68,7 +69,7 @@ class FetchUrlContentsTool(base_tool.BaseTool):
       opal_adk_error.OpalAdkError: If the URL cannot be fetched.
     """
     try:
-      response = requests.get(url)
+      response = requests.get(url, timeout=_REQUEST_TIMEOUT_SECONDS)
       response.raise_for_status()
       return _convert_to_markdown(response.text)
     except requests.exceptions.RequestException as e:

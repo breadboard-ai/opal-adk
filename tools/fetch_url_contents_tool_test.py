@@ -25,7 +25,9 @@ class FetchUrlContentsTest(absltest.TestCase):
     url = 'http://example.com'
     result = fetch_url_contents_tool.fetch_url(url)
 
-    mock_get.assert_called_once_with(url)
+    mock_get.assert_called_once_with(
+        url, timeout=fetch_url_contents_tool._REQUEST_TIMEOUT_SECONDS
+    )
     mock_response.raise_for_status.assert_called_once()
     self.assertIn('# Test', result)
     self.assertIn('Some text', result)
